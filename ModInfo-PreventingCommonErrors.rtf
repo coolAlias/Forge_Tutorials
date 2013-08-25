@@ -1,0 +1,37 @@
+{\rtf1\ansi\deff0\adeflang1025
+{\fonttbl{\f0\froman\fprq2\fcharset0 Times New Roman;}{\f1\froman\fprq2\fcharset2 Symbol;}{\f2\fswiss\fprq2\fcharset0 Arial;}{\f3\fnil\fprq2\fcharset0 Microsoft YaHei;}{\f4\fnil\fprq2\fcharset0 Mangal;}{\f5\fnil\fprq0\fcharset128 Mangal;}}
+{\colortbl;\red0\green0\blue0;\red128\green128\blue128;}
+{\stylesheet{\s0\snext0\nowidctlpar{\*\hyphen2\hyphlead2\hyphtrail2\hyphmax0}\cf0\kerning1\hich\af6\langfe2052\dbch\af4\afs24\lang1081\loch\f0\fs24\lang1033 Default;}
+{\s15\sbasedon0\snext16\sb240\sa120\keepn\hich\af3\dbch\af4\afs28\loch\f2\fs28 Heading;}
+{\s16\sbasedon0\snext16\sb0\sa120 Text body;}
+{\s17\sbasedon16\snext17\sb0\sa120\dbch\af5 List;}
+{\s18\sbasedon0\snext18\sb120\sa120\noline\i\dbch\af5\afs24\ai\fs24 Caption;}
+{\s19\sbasedon0\snext19\noline\dbch\af5 Index;}
+}{\info{\creatim\yr2013\mo8\dy25\hr9\min39}{\revtim\yr0\mo0\dy0\hr0\min0}{\printim\yr0\mo0\dy0\hr0\min0}{\comment OpenOffice.org}{\vern3410}}\deftab709
+
+{\*\pgdsctbl
+{\pgdsc0\pgdscuse195\pgwsxn12240\pghsxn15840\marglsxn1134\margrsxn1134\margtsxn1134\margbsxn1134\pgdscnxt0 Default;}}
+\formshade\paperh15840\paperw12240\margl1134\margr1134\margt1134\margb1134\sectd\sbknone\sectunlocked1\pgndec\pgwsxn12240\pghsxn15840\marglsxn1134\margrsxn1134\margtsxn1134\margbsxn1134\ftnbj\ftnstart1\ftnrstcont\ftnnar\aenddoc\aftnrstcont\aftnstart1\aftnnrlc
+\pgndec\pard\plain \s16\sb0\sa120\sb0\sa0{\rtlch \ltrch\loch
+Preventing Errors before they start: Creating a ModInfo file}
+\par \pard\plain \s16\sb0\sa120\sb0\sa0{\rtlch \ltrch\loch
+[SPOILER]}
+\par \pard\plain \s16\sb0\sa120\sb0\sa0{\rtlch \ltrch\loch
+This has been covered in other tutorials, but I feel it's important enough to mention again.}
+\par \pard\plain \s16\sb0\sa120\sb0\sa0{\rtlch \ltrch\loch
+}
+\par \pard\plain \s16\sb0\sa120\sb0\sa0{\rtlch \ltrch\loch
+I always make a ModInfo class that defines my mod variables such as my mod id then I reference that instead of hard-coding the ID everwhere.}
+\par \pard\plain \s16\sb0\sa120\sb0\sa0{\rtlch \ltrch\loch
+}
+\par \pard\plain \s16\sb0\sa120\sb0\sa0{\rtlch \ltrch\loch
+Not only does this prevent me from making typos, but it also allows me to change my mod id, mod name or other variable in one single location and all of my code will still be correct.}
+\par \pard\plain \s16\sb0\sa120\sb0\sa0{\rtlch \ltrch\loch
+}
+\par \pard\plain \s16\sb0\sa120\sb0\sa0{\rtlch \ltrch\loch
+Here's how you can make one for yourself:\line [CODE]\line @Mod(modid = ModInfo.ID, name = ModInfo.NAME, version = ModInfo.VERSION)\line @NetworkMod(clientSideRequired=true, serverSideRequired=false)\line \line public final class ArcaneLegacy\line \{\line @Instance(ModInfo.ID)\line public static ArcaneLegacy instance = new ArcaneLegacy();\line \line // etc.\line [/CODE]\line And ModInfo would look like this:\line [CODE]\line public class ModInfo\line \{\line public static final String ID = "coolaliasarcanelegacy";\line public static final String NAME = "Arcane Legacy";\line public static final String VERSION = "0.1.0";\line \}\line [/CODE]\line You can of course add any other information related to your mod here as well, such as CHANNELS for your packet handler.\line Whenever you would put "modid" in your code, change it to ModInfo.ID, such as in registerIcons:\line [CODE]\line @Override\line @SideOnly(Side.CLIENT)\line public void registerIcons(IconRegister iconRegister)\line \{\line this.itemIcon = iconRegister.registerIcon(ModInfo.ID + ":" + this.getUnlocalizedName().substring(5));\line \}\line [/CODE]\line If you ever change your mod id, now you only need to change it in one place, ModInfo, and ALL of your code will still be 100% correct. Also you won't ever have to worry about typos }{\rtlch \ltrch\loch
+}{\rtlch \ltrch\loch
+ }
+\par \pard\plain \s16\sb0\sa120\sb0\sa0{\rtlch \ltrch\loch
+[/SPOILER]}
+\par }
