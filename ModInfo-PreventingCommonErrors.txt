@@ -12,10 +12,10 @@ Here's how you can make one for yourself:
 
 public final class ArcaneLegacy
 {
-@Instance(ModInfo.ID)
-public static ArcaneLegacy instance = new ArcaneLegacy();
+  @Instance(ModInfo.ID)
+  public static ArcaneLegacy instance = new ArcaneLegacy();
 
-// rest of main class here
+  // rest of main class here
 
 }
 
@@ -23,9 +23,9 @@ public static ArcaneLegacy instance = new ArcaneLegacy();
 
 public class ModInfo
 {
-public static final String ID = "coolaliasarcanelegacy";
-public static final String NAME = "Arcane Legacy";
-public static final String VERSION = "0.1.0";
+  public static final String ID = "coolaliasarcanelegacy";
+  public static final String NAME = "Arcane Legacy";
+  public static final String VERSION = "0.1.0";
 }
 
 /*
@@ -37,7 +37,7 @@ Whenever you would put "modid" in your code, change it to ModInfo.ID, such as in
 @SideOnly(Side.CLIENT)
 public void registerIcons(IconRegister iconRegister)
 {
-this.itemIcon = iconRegister.registerIcon(ModInfo.ID + ":" + this.getUnlocalizedName().substring(5));
+  this.itemIcon = iconRegister.registerIcon(ModInfo.ID + ":" + this.getUnlocalizedName().substring(5));
 }
 
 /*
