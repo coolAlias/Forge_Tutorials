@@ -53,9 +53,9 @@ public class ItemThrowingRock extends BaseModItem
 {
 	public ItemThrowingRock(int par1)
 	{
-		���� super(par1);
-		���� this.maxStackSize = 18;
-		���� this.setCreativeTab(CreativeTabs.tabCombat);
+		super(par1);
+		this.maxStackSize = 18;
+		this.setCreativeTab(CreativeTabs.tabCombat);
 	}
 }
 /*
@@ -111,15 +111,15 @@ public class EntitySnowball extends EntityThrowable
 {
 	public EntitySnowball(World par1World)
 	{
-		���� super(par1World);
+		super(par1World);
 	}
 	public EntitySnowball(World par1World, EntityLivingBase par2EntityLivingBase)
 	{
-		���� super(par1World, par2EntityLivingBase);
+		super(par1World, par2EntityLivingBase);
 	}
 	public EntitySnowball(World par1World, double par2, double par4, double par6)
 	{
-		���� super(par1World, par2, par4, par6);
+		super(par1World, par2, par4, par6);
 	}
 	/**
 	 * Called when this EntityThrowable hits a block or entity.
@@ -354,7 +354,7 @@ First, please read ALL sections of the above tutorial carefully. Then see if you
 1. Read ALL sections of the tutorial carefully. 
 2. Make sure you have created your texture using GIMP, Paint, or whatever and saved in .png format.
 3. Make sure your texture is in the correct folder; for forge, it is:
-������ /forge/mcp/src/minecraft/assets/yourmodid/textures/items/
+	forge/mcp/src/minecraft/assets/yourmodid/textures/items/
 4. Make sure your folder "yourmodid" is all lower-case.
 5. Re-read the tutorial. Did you follow ALL of the steps EXACTLY?
 6. Did you follow TechGuy's tutorial (linked at the top) for setting up your main mod,
