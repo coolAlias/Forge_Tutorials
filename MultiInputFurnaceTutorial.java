@@ -6,7 +6,7 @@ import java.util.Arrays;
 /*
 Do you need a furnace that can handle 3 inputs? How about 5? 10? Do some of your
 furnace recipes require 2 input itemstacks to smelt, while other recipes call for
-more or only 1? Look no further – below you will learn how to do just that!
+more or only 1? Look no further ï¿½ below you will learn how to do just that!
 
 But fist, if you've never made even a single-input furnace or other TileEntity-based Container/Gui, please do that before trying to follow this tutorial. I'm not going to cover all aspects of the Gui, Block and other such things here as there are other tutorials on that.
 
