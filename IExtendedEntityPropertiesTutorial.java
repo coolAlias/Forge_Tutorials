@@ -380,5 +380,7 @@ that not everything necessarily will. Server/Client communications is not my are
 or I would gladly try to explain it. As it is, I barely understand it myself and am constantly
 battling to figure out what information I need to send where, if I even need to send it at all.
 
+To learn more about sending and receiving packets, go to http://www.minecraftforge.net/wiki/Tutorials/Packet_Handling
+
 If anyone cares to share their knowledge, please do! Thanks!
 */
