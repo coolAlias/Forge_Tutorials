@@ -369,4 +369,16 @@ Now try it. Yay! It works!
 
 In conjunction with a custom ItemGoldCoin and LivingDropsEvent, I'm sure you can see
 how this could be used.
+
+FINAL NOTE:
+If you use IExtendedEntityProperties to change something that affects the CLIENT-side of things,
+such as an entity's step height or player.capabilities such as allowFlying, it's been my experience
+that you need to send a Packet to the player letting them know about their new abilities.
+
+Rest assured that all of the things I showed above will work fine without packets, but be warned
+that not everything necessarily will. Server/Client communications is not my area of expertise,
+or I would gladly try to explain it. As it is, I barely understand it myself and am constantly
+battling to figure out what information I need to send where, if I even need to send it at all.
+
+If anyone cares to share their knowledge, please do! Thanks!
 */
