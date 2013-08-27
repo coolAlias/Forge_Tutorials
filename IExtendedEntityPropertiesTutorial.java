@@ -340,7 +340,7 @@ public class GuiManaBar extends Gui
 		int xPos = 2;
 		int yPos = 2;
 		
-		// setting all color values to 1.0F will render the texture as it looks in your texture file
+		// setting all color values to 1.0F will render the texture as it appears in your texture file
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 		
 		// Somewhere in Minecraft vanilla code it says to do this because of a lighting bug
