@@ -710,7 +710,11 @@ public class GuiItemInventory extends GuiContainer
 	private float ySize_lo;
 
 	/** ResourceLocation takes 2 parameters: ModId, path to texture at the location:
-	 * "src/minecraft/assets/modid/" */
+	 * "src/minecraft/assets/modid/"
+	 * 
+	 * I have provided a sample texture file that works with this tutorial. Download it
+	 * from Forge_Tutorials/textures/gui/
+	 */
 	private static final ResourceLocation iconLocation = new ResourceLocation("inventoryitemmod", "textures/gui/inventoryitem.png");
 
 	/** The inventory to render on screen */
