@@ -296,6 +296,9 @@ public class GuiManaBar extends Gui
 	starting from the folder 'textures/' from '/src/minecraft/assets/yourmodid/'
 	
 	The texture file must be 256x256 (or multiples thereof)
+	
+	I have provided a functional (but ugly) mana_bar.png file to use with this tutorial.
+	Download it from Forge_Tutorials/textures/gui
 	 */
 	private static final ResourceLocation texturepath = new ResourceLocation("tutorial", "textures/gui/mana_bar.png");
 
