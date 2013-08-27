@@ -18,3 +18,17 @@ of doing it, then please let me know!
 
 If you have any suggestions on how to make the tutorials more clear, if you have a question or if you just want to
 say hi, leave a comment or p.m. me on minecraftforum.net and I'll see what I can do :)
+
+If you'd prefer to read the tutorials on the forums, here are the links:
+
+- EventHandler and IExtendedEntityProperties: http://www.minecraft...e-explanations/
+
+- Creating an Item that stores an Inventory: http://www.minecraft...s-an-inventory/
+
+- Rendering Your Custom Item Texture: http://www.minecraft...m-item-texture/
+
+- Overriding shift-click in custom Containers: http://www.minecraft...shift-clicking/
+
+- Using Potions in Crafting Recipes: http://www.minecraft...afting-recipes/
+
+- Enchanted Books and Crafting Recipes: http://www.minecraft...-tag-compounds/
