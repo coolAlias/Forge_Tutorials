@@ -15,8 +15,11 @@ EntityLivingBase entities.
 Prerequisites:
 1. Know how to set up and use Forge Events. See my tutorial on creating an EventHandler.
 2. Willingness to read carefully.
-
-Step 1: Create a class that implements IExtendedEntityProperties
+*/
+/**
+ * Step 1: Create a class that implements IExtendedEntityProperties
+ */
+/*
 Since we are first making variables specific to EntityPlayer, we will call this
 class "ExtendedPlayer" so it's always obvious what kind of entity can use it. This
 will be important if you add different variables to different entities.
@@ -117,8 +120,10 @@ public class ExtendedPlayer implements IExtendedEntityProperties
 		this.currentMana = this.maxMana;
 	}
 }
+/**
+ * Step 2: Register the ExtendedPlayer class in your EventHandler
+ */
 /*
-Step 2: Register the ExtendedPlayer class in your EventHandler
 In order to access our newly created extended player properties, we need to
 register them for every instance of EntityPlayer. That just means we're
 creating a new instance of the class so we can access it.
@@ -155,8 +160,11 @@ public class TutEventHandler
 /*
 That's it! All players will now start with a pool of mana, so we just have to do
 something with it.
-
-Step 3.1: Using our new ExtendedPlayer Properties in an Item
+*/
+/**
+ * Step 3.1: Using our new ExtendedPlayer Properties in an Item
+ */
+/*
 For the sake of demonstration, we'll make a very basic item called... wait for it...
 'ItemUseMana'. I should be naming mountains with this kind of stuff.
 
@@ -211,8 +219,10 @@ public void load(FMLInitializationEvent event)
 {
 	MinecraftForge.EVENT_BUS.register(new TutEventHandler());
 }
+/**
+ * Step 3.2: Using our new ExtendedPlayer Properties in an Event
+ */
 /*
-Step 3.2: Using our new ExtendedPlayer Properties in an Event
 Events are another really great place to use additional properties.
 Since we only added mana, we will pretend that it is in fact a spell
 that prevents damage from falling up to a certain distance.
@@ -266,8 +276,260 @@ public void onLivingFallEvent(LivingFallEvent event)
 		}
 	}
 }
+/**
+ * Step 3.3: Using our ExtendedPlayer Properties in a Gui Overlay
+ */
 /*
-Step 4: Adding another kind of Extended Properties
+Here we will create a mana bar display in the upper-left corner of the screen using
+currentMana and maxMana from our ExtendedPlayer class.
+
+The first part of this section is from http://www.minecraftforge.net/wiki/Gui_Overlay
+I highly recommend you read that tutorial before continuing on, as it contains lots
+of great information related to this topic.
+*/
+@SideOnly(Side.CLIENT)
+public class GuiManaBar extends Gui
+{
+	private Minecraft mc;
+	/* (my added notes:)
+	ResourceLocation takes 2 arguments: your mod id and the path to your texture file,
+	starting from the folder 'textures/' from '/src/minecraft/assets/yourmodid/'
+	
+	The texture file must be 256x256 (or multiples thereof)
+	 */
+	private static final ResourceLocation texturepath = new ResourceLocation("tutorial", "textures/gui/mana_bar.png");
+
+	public GuiManaBar(Minecraft mc)
+	{
+		super();
+		// We need this to invoke the render engine.
+		this.mc = mc;
+	}
+
+	//
+	// This event is called by GuiIngameForge during each frame by
+	// GuiIngameForge.pre() and GuiIngameForce.post().
+	//
+	@ForgeSubscribe(priority = EventPriority.NORMAL)
+	public void onRenderExperienceBar(RenderGameOverlayEvent event)
+	{
+		// We draw after the ExperienceBar has drawn.  The event raised by GuiIngameForge.pre()
+		// will return true from isCancelable.  If you call event.setCanceled(true) in
+		// that case, the portion of rendering which this event represents will be canceled.
+		// We want to draw *after* the experience bar is drawn, so we make sure isCancelable() returns
+		// false and that the eventType represents the ExperienceBar event.
+		if (event.isCancelable() || event.type != ElementType.EXPERIENCE)
+		{
+			return;
+		}
+		
+		/** Start of my tutorial */
+		
+		// Get our extended player properties and assign it locally so we can easily access it
+		ExtendedPlayer props = (ExtendedPlayer) this.mc.thePlayer.getExtendedProperties(ExtendedPlayer.EXT_PROP_NAME);
+		
+		// If for some reason these properties don't exist (perhaps in multiplayer?)
+		// or the player doesn't have mana, return. Note that I added a new method
+		// 'getMaxMana()' to ExtendedPlayer for this purpose
+		if (props == null || props.getMaxMana() == 0)
+		{
+			return;
+		}
+
+		// Starting position for the mana bar - 2 pixels from the top left corner.
+		int xPos = 2;
+		int yPos = 2;
+		
+		// setting all color values to 1.0F will render the texture as it looks in your texture file
+		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+		
+		// Somewhere in Minecraft vanilla code it says to do this because of a lighting bug
+		GL11.glDisable(GL11.GL_LIGHTING);
+		
+		// This magic formula here binds the texture to the renderer
+		this.mc.func_110434_K().func_110577_a(texturepath);
+		
+		/*
+		The parameters for drawTexturedModalRect are as follows:
+		
+		drawTexturedModalRect(int x, int y, int u, int v, int width, int height);
+		
+		x and y are the on-screen position at which to render.
+		u and v are the coordinates of the most upper-left pixel in your texture file from which to start drawing.
+		width and height are how many pixels to render from the start point (u, v)
+		 */
+		// First draw the background layer. In my texture file, it starts at the upper-
+		// left corner (x=0, y=0), is 50 pixels long and 4 pixels thick (y value)
+		this.drawTexturedModalRect(xPos, yPos, 0, 0, 50, 4);
+		// Then draw the foreground; it's located just below the background in my
+		// texture file, so it starts at x=0, y=4, is only 2 pixels thick and 50 length
+		// Why y=4 and not y=5? Y starts at 0, so 0,1,2,3 = 4 pixels for the background
+		
+		// However, we want the length to be based on current mana, so we need a new variable:
+		int manabarwidth = (int)((float)(props.getCurrentMana() / props.getMaxMana()) * 50);
+		System.out.println("[GUI MANA] Current mana bar width: " + manabarwidth);
+		// Now we can draw our mana bar at yPos+1 so it centers in the background:
+		this.drawTexturedModalRect(xPos, yPos + 1, 0, 4, manabarwidth, 2);
+	}
+}
+/*
+You will need to add this code to your main mod class postInit method in order to register
+your new GuiManaBar overlay as an active event (just like registering your EventHandler),
+otherwise nothing will appear.
+ */
+@EventHandler
+public void postInit(FMLPostInitializationEvent event)
+{
+	MinecraftForge.EVENT_BUS.register(new GuiManaBar(Minecraft.getMinecraft()));
+}
+/*
+Alright, try it out. There should be a horizontal mana bar in the upper-left corner of 
+your screen. Now use our ItemUseMana once or twice. Notice the mana bar doesn't update.
+
+What's going on?
+
+Well, currently only the server knows how much mana the player has. We never told the client
+that the player even has mana, let alone how much! For many purposes, this is fine. However,
+since a Gui is only rendered client side, this is a case where we will need to use packets
+to synchronize the server/client.
+
+Please take a few minutes to read up on Packet Handling, as I'm not going to cover it in
+much detail here:
+http://www.minecraftforge.net/wiki/Tutorials/Packet_Handling
+
+Ok, moving on.
+Make a packet handler class like in the above tutorial:
+*/
+public class TutorialPacketHandler implements IPacketHandler
+{
+	// Don't need to do anything here.
+	public TutorialPacketHandler() {}
+
+	@Override
+	public void onPacketData(INetworkManager manager, Packet250CustomPayload packet, Player player)
+	{
+		// This is a good place to parse through channels if you have multiple channels
+		if (packet.channel.equals("tutchannel")) {
+			handleExtendedProperties(packet, player);
+		}
+	}
+	
+	// Making different methods to handle each channel helps keep things tidy:
+	private void handleExtendedProperties(Packet250CustomPayload packet, Player player)
+	{
+		DataInputStream inputStream = new DataInputStream(new ByteArrayInputStream(packet.data));
+		
+		ExtendedPlayer props = ((ExtendedPlayer)((EntityPlayer) player).getExtendedProperties(ExtendedPlayer.EXT_PROP_NAME));
+
+		// Everything we read here should match EXACTLY the order in which we wrote it
+		// to the output stream in our ExtendedPlayer sync() method.
+		try {
+			props.setMaxMana(inputStream.readInt());
+			props.setCurrentMana(inputStream.readInt());
+		} catch (IOException e) {
+			e.printStackTrace();
+			return;
+		}
+		// Just so you can see in the console that it's working:
+		System.out.println("[PACKET] Mana from packet: " + props.getCurrentMana() + "/" + props.getMaxMana());
+	}
+}
+/*
+Then modify the following line in your main mod class to the below:
+*/
+@NetworkMod(clientSideRequired=true, serverSideRequired=false, channels = {"tutchannel"}, packetHandler = TutorialPacketHandler.class)
+/*
+That's it for setting up the Packet Handler framework, now we'll set up a method to send
+packets from within our ExtendedPlayer class. I like to give this method the same name
+in all of my IExtendedEntityProperties classes, just to make it easy on myself.
+*/
+/**
+ * Sends a packet to the client containing information stored on the server
+ * for ExtendedPlayer
+ */
+public final void syncExtendedProperties()
+{
+	ByteArrayOutputStream bos = new ByteArrayOutputStream(8);
+	DataOutputStream outputStream = new DataOutputStream(bos);
+	
+	// We'll write max mana first so when we set current mana client
+	// side, it doesn't get set to 0 (see methods below)
+	try {
+		outputStream.writeInt(this.maxMana);
+		outputStream.writeInt(this.currentMana);
+	} catch (Exception ex) {
+		ex.printStackTrace();
+	}
+
+	Packet250CustomPayload packet = new Packet250CustomPayload();
+	packet.channel = "tutchannel";
+	packet.data = bos.toByteArray();
+	packet.length = bos.size();
+
+	Side side = FMLCommonHandler.instance().getEffectiveSide();
+	
+	// We only want to send from the server to the client
+	if (side == Side.SERVER) {
+		EntityPlayerMP player1 = (EntityPlayerMP) player;
+		PacketDispatcher.sendPacketToPlayer(packet, (Player) player1);
+	}
+}
+/*
+Okay, well that will send a packet whenever we call it. Problem is, we don't call it
+anywhere yet. You could do it in onLivingUpdate or some such, but that would unnecessarily
+spam packets which would be no good. We only want to call it when any of the information
+stored in ExtendedPlayer changes, in our case, when current or max mana is modified.
+
+Here you can see my implementations for setCurrentMana and setMaxMana:
+ */
+/**
+ * Sets current mana to amount or maxMana, whichever is lesser
+ */
+public void setCurrentMana(int amount)
+{
+	this.currentMana = (amount < this.maxMana ? amount : this.maxMana);
+	this.syncExtendedProperties();
+}
+
+/**
+ * Sets max mana to amount or 0 if amount is less than 0
+ */
+public void setMaxMana(int amount)
+{
+	this.maxMana = (amount > 0 ? amount : 0);
+	this.syncExtendedProperties();
+}
+/*
+Note that we add a call to syncExtendedProperties() in each of these methods because they
+changed our stored variables. We also need to sync the properties in any other methods that
+do so, like consumeMana and replenishMana.
+
+Another time we need to sync properties is after the entity is loaded from NBT, as that is
+only done server side and we want the information for our GuiManaBar. Because we can't
+send and receive packets before everything is loaded, we can't do it from within the
+readFromNBT method. Guess where we can do it from? That's right, our EventHandler!
+
+Add this to your EventHandler's onEntityJoinWorldEvent method, as this event occurs
+after everything (the world, entities, etc) is loaded but before anything really happens
+in the game. As a bonus, it's only called once per entity, so you're not spamming packets.
+*/
+@ForgeSubscribe
+public void onEntityJoinWorld(EntityJoinWorldEvent event)
+{
+	//Only need to synchronize when the world is remote (i.e. we're on the server side)
+	// and only for player entities, as that's what we need for the GuiManaBar
+	if (!event.entity.worldObj.isRemote && event.entity instanceof EntityPlayer) {
+		((ExtendedPlayer)(event.entity.getExtendedProperties(ExtendedPlayer.EXT_PROP_NAME))).syncExtendedProperties();
+	}
+}
+/*
+Anyways, that's a lot of work just to get a little mana bar, but it should all be working
+correctly now. Fire it up and try for yourself!
+*/
+/**
+ * Step 4: Adding another kind of Extended Properties
+ */
+/*
 Now we're going to add a variable to all EntityLivingBase entities in addition
 to the ones we added above for EntityPlayer. We only want players to have mana,
 but we want every creature under the sun to have riches for us to plunder!
