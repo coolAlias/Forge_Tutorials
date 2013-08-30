@@ -875,7 +875,7 @@ public class ItemStore extends Item
 	*/
 	// This will work in ALL cases
 	@Override
-    	public boolean onItemUse(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ)
+    	public boolean onItemUse(ItemStack itemstack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ)
     	{
 		if (!world.isRemote)
 		{
@@ -886,13 +886,13 @@ public class ItemStore extends Item
     	
     	// CAUTION!!! This will ONLY work if you also override getMaxItemUseDuration to return a value above 0
     	@Override
-	public ItemStack onItemRightClick(ItemStack wand, World world, EntityPlayer player)
+	public ItemStack onItemRightClick(ItemStack itemstack, World world, EntityPlayer player)
 	{
 		if (!world.isRemote)
 		{
 			player.openGui(InventoryItemMain.instance, InventoryItemMain.ItemInventoryGuiIndex, world, (int) player.posX, (int) player.posY, (int) player.posZ);
 		}
-        	return false;
+        	return itemstack;
     	}
 
 	@Override
