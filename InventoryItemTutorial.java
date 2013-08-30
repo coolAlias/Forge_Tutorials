@@ -826,7 +826,22 @@ public class ItemStore extends Item
 	@Override
 	public void onUpdate(ItemStack itemstack, World world, Entity entity, int par4, boolean isCurrentItem)
 	{
-		// Only Player's will be accessing the GUI
+		/*
+		Only Player's will be accessing the GUI, so check if entity is a player.
+		
+		Note that if you need your container / inventory contents updated client side
+		then remove the '!world.isRemote' statement. A case where you might want this
+		would be if your inventory has an 'active' slot, such as a currently selected
+		spell in a spellbook and you need to know which spell that while the Gui is open
+		client side so you can render something on screen. This is because NBT data is
+		stored separately client and server side, and when you open the gui, the client
+		asks for the server NBT data, but if you change it while the gui is open, only
+		the server will know about it with the code below, so the client NBT won't be
+		updated until the gui is closed and reopened. Usually, this is not a problem.
+		
+		For most inventories, we only care about the NBT stored server side and everything
+		else will update itself automatically.
+		*/
 		if (!world.isRemote && entity instanceof EntityPlayer)
 		{
 			// Cast Entity parameter as an EntityPlayer
@@ -852,6 +867,33 @@ public class ItemStore extends Item
 			}
 		}
 	}
+	
+	/*
+	NOTE: If you want to open your gui on right click and your ItemStore doesn't have a max use duration,
+	you MUST use onItemUse instead of onItemRightClick method or your inventory will NOT save. This has to
+	do with the way these 2 vanilla methods work, not my code.
+	*/
+	// This will work in ALL cases
+	@Override
+    	public boolean onItemUse(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ)
+    	{
+		if (!world.isRemote)
+		{
+			player.openGui(InventoryItemMain.instance, InventoryItemMain.ItemInventoryGuiIndex, world, (int) player.posX, (int) player.posY, (int) player.posZ);
+		}
+        	return false;
+    	}
+    	
+    	// CAUTION!!! This will ONLY work if you also override getMaxItemUseDuration to return a value above 0
+    	@Override
+	public ItemStack onItemRightClick(ItemStack wand, World world, EntityPlayer player)
+	{
+		if (!world.isRemote)
+		{
+			player.openGui(InventoryItemMain.instance, InventoryItemMain.ItemInventoryGuiIndex, world, (int) player.posX, (int) player.posY, (int) player.posZ);
+		}
+        	return false;
+    	}
 
 	@Override
 	@SideOnly(Side.CLIENT)
