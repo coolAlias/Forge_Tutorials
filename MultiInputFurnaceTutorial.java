@@ -6,9 +6,11 @@ import java.util.Arrays;
 /*
 Do you need a furnace that can handle 3 inputs? How about 5? 10? Do some of your
 furnace recipes require 2 input itemstacks to smelt, while other recipes call for
-more or only 1? Look no further � below you will learn how to do just that!
+more or only 1? Look no further! Below you will learn how to do just that!
 
-But fist, if you've never made even a single-input furnace or other TileEntity-based Container/Gui, please do that before trying to follow this tutorial. I'm not going to cover all aspects of the Gui, Block and other such things here as there are other tutorials on that.
+But first, if you've never made even a single-input furnace or other TileEntity-based Container/Gui,
+please do that before trying to follow this tutorial. I'm not going to cover all aspects of the Gui,
+Block and other such things here as there are other tutorials on that.
 
 On to the tutorial.
 */
@@ -282,6 +284,10 @@ public class SlotArcaneInscriber extends Slot
 	}
 }
 
+/**
+ * I have this slot so I can get the discharged runes back for re-use rather than consuming them in the process.
+ * You probably won't need this kind of slot for a furnace.
+ */
 class SlotArcaneInscriberDischarge extends Slot
 {
 	private int field_75228_b;
@@ -318,7 +324,9 @@ class SlotArcaneInscriberDischarge extends Slot
 		super.onPickupFromSlot(par1EntityPlayer, par2ItemStack);
 	}
 }
-
+/**
+ * I made this slot to show the output of the current runes on screen, so player's know what they are about to make
+ */
 class SlotArcaneInscriberRecipe extends Slot
 {
 	private int field_75228_b;
@@ -523,6 +531,7 @@ public class TileEntityArcaneInscriber extends TileEntity implements ISidedInven
 				flag1 = (this.inscriberInventory[ContainerArcaneInscriber.RECIPE] != this.getCurrentRecipe());
 				this.inscriberInventory[ContainerArcaneInscriber.RECIPE] = this.getCurrentRecipe();
 				// Recipe changed - update inventory
+				// (only because I'm showing the output for the current recipe on screen)
 				if (flag1) { this.onInventoryChanged(); }
 
 				if (this.canInscribe()) {
@@ -533,7 +542,7 @@ public class TileEntityArcaneInscriber extends TileEntity implements ISidedInven
 				{
 					flag1 = true;
 
-					// Decrement input slots, increment discharge slots
+					// Decrement input (fuel) slots, increment discharge slots if you have them
 					for (int i = 0; i < ContainerArcaneInscriber.RUNE_SLOTS; ++i)
 					{
 						if (this.inscriberInventory[ContainerArcaneInscriber.INPUT[i]] != null)
@@ -555,7 +564,8 @@ public class TileEntityArcaneInscriber extends TileEntity implements ISidedInven
 					}
 				}
 			}
-
+			
+			// Everything's good to go, so increment furnace progress until it reaches the required time to smelt your item(s)
 			if (this.isInscribing() && this.canInscribe())
 			{
 				++this.inscribeProgressTime;
@@ -587,6 +597,8 @@ public class TileEntityArcaneInscriber extends TileEntity implements ISidedInven
 	/**
 	 * Returns true if the inscriber can inscribe a scroll;
 	 * i.e. has a blank scroll, has a charged rune, destination stack isn't full, etc.
+	 * This method will look very different for every furnace depending on whatever requirements
+	 * you decide are necessary for your furnace to smelt an item or items
 	 */
 	private boolean canInscribe()
 	{
@@ -626,7 +638,11 @@ public class TileEntityArcaneInscriber extends TileEntity implements ISidedInven
 				}
 			}
 		}
-
+		
+		// If all of your above requirements are met, then on to the final check. Most of these should
+		// be the same as I have here regardless of furnace type, but notice I have an extra check for
+		// a null itemstack because the smelting result might be stored in my recipe slot even if all
+		// other slots in the furnace are empty.
 		if (canInscribe) {
 			ItemStack itemstack = getCurrentRecipe();
 			if (itemstack == null) { itemstack = this.inscriberInventory[ContainerArcaneInscriber.RECIPE]; }
@@ -648,6 +664,7 @@ public class TileEntityArcaneInscriber extends TileEntity implements ISidedInven
 		}
 	}
 
+	// If you have more than one output per recipe, this will return an ItemStack[] array instead
 	public ItemStack getCurrentRecipe() {
 		eturn SpellRecipes.spells().getInscribingResult(this.inscriberInventory);
 	}
