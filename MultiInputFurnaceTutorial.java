@@ -659,6 +659,9 @@ public class TileEntityArcaneInscriber extends TileEntity implements ISidedInven
 	{
 		if (this.canInscribe())
 		{
+			// If you had multiple outputs, this would be an ItemStack[] array that you would
+			// then need to iterate through, checking if each index was null and if not,
+			// finding the correct output slot to try and add to
 			ItemStack inscribeResult = this.inscriberInventory[ContainerArcaneInscriber.RECIPE];
 
 			if (inscribeResult != null)
@@ -829,6 +832,8 @@ public class SpellRecipes
 {
 	private static final SpellRecipes spells = new SpellRecipes();
 	// This creates a HashMap whose Key is a specific, ordered List of Integers
+	// If you want multiple outputs from one recipe, change the ItemStack to an ItemStack[]
+	// (and of course adjust your TileEntity and Container code)
 	private HashMap<List<Integer>, ItemStack> metaInscribingList = new HashMap<List<Integer>, ItemStack>();
 	// Same as above except it gives us the experience for each crafting result
 	private HashMap<List<Integer>, Float> metaExperience = new HashMap<List<Integer>, Float>();
@@ -882,11 +887,11 @@ public class SpellRecipes
 		}
 	}
 
-/**
-* Used to get the resulting ItemStack form a source inventory (fed to it by the contents of the slots in your container)
-* @param item The Source inventory from your custom furnace input slots
-* @return The result ItemStack
-*/
+	/**
+	 * Used to get the resulting ItemStack form a source inventory (fed to it by the contents of the slots in your container)
+	 * @param item The Source inventory from your custom furnace input slots
+	 * @return The result ItemStack (NOTE: if you want multiple outputs, change to ItemStack[] and adjust accordingly)
+	 */
 	public ItemStack getInscribingResult(ItemStack[] runes)
 	{
 		// count the recipe length so we can make the appropriate sized array
