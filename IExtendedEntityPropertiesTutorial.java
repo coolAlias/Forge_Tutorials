@@ -343,6 +343,14 @@ public class GuiManaBar extends Gui
 		int xPos = 2;
 		int yPos = 2;
 		
+		// The center of the screen can be gotten like this during this event:
+		// int xPos = event.resolution.getScaledWidth() / 2;
+		// int yPos = event.resolution.getScaledHeight() / 2;
+
+		// Be sure to offset based on your texture size or your texture will not be truly centered:
+		// int xPos = (event.resolution.getScaledWidth() + textureWidth) / 2;
+		// int yPos = (event.resolution.getScaledHeight() + textureHeight) / 2;
+		
 		// setting all color values to 1.0F will render the texture as it appears in your texture file
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 		
