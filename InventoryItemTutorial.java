@@ -870,10 +870,17 @@ public class ItemStore extends Item
 	
 	/*
 	NOTE: If you want to open your gui on right click and your ItemStore doesn't have a max use duration,
-	you MUST use onItemUse instead of onItemRightClick method or your inventory will NOT save. This has to
-	do with the way these 2 vanilla methods work, not my code.
+	you MUST override getMaxItemUseDuration to return a value of at least 1, otherwise your stored items
+	will NOT be saved. This is an issue with the vanilla methods onItemUse and onItemRightClick.
 	*/
-	// This will work in ALL cases
+	@Override
+	public int getMaxItemUseDuration(ItemStack itemstack)
+	{
+		return 1;
+	}
+	
+	// Choose one of these two methods:
+	// 1. onItemUse
 	@Override
     	public boolean onItemUse(ItemStack itemstack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ)
     	{
@@ -884,7 +891,7 @@ public class ItemStore extends Item
         	return false;
     	}
     	
-    	// CAUTION!!! This will ONLY work if you also override getMaxItemUseDuration to return a value above 0
+    	// 2. onItemRightClick
     	@Override
 	public ItemStack onItemRightClick(ItemStack itemstack, World world, EntityPlayer player)
 	{
