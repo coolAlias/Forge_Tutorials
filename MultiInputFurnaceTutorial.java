@@ -12,7 +12,10 @@ But first, if you've never made even a single-input furnace or other TileEntity-
 please do that before trying to follow this tutorial. I'm not going to cover all aspects of the Gui,
 Block and other such things here as there are other tutorials on that.
 
-If you need help setting up the basics, check out Microjunk's furnace tutorials:
+If you need help setting up the basics, check out MrrGingerNinja's tutorial on Tile-Entity based Inventory:
+http://www.minecraftforum.net/topic/1959857-162-advanced-minecraft-forge-modding-tutorial-2-inventories/
+
+I also recommend Microjunk's furnace tutorials:
 http://www.minecraftforum.net/topic/1924178-forge-162-micros-furnace-tutorials/
 
 On to the tutorial.
