@@ -377,7 +377,7 @@ public class GuiManaBar extends Gui
 		// Why y=4 and not y=5? Y starts at 0, so 0,1,2,3 = 4 pixels for the background
 		
 		// However, we want the length to be based on current mana, so we need a new variable:
-		int manabarwidth = (int)((float)(props.getCurrentMana() / props.getMaxMana()) * 50);
+		int manabarwidth = (int)(((float) props.getCurrentMana() / props.getMaxMana()) * 50));
 		System.out.println("[GUI MANA] Current mana bar width: " + manabarwidth);
 		// Now we can draw our mana bar at yPos+1 so it centers in the background:
 		this.drawTexturedModalRect(xPos, yPos + 1, 0, 4, manabarwidth, 2);
