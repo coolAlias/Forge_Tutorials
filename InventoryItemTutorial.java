@@ -880,7 +880,7 @@ public class ItemStore extends Item
 	}
 	
 	// Choose one of these two methods:
-	// 1. onItemUse
+	// 1. onItemUse - will only open if you click on a tile, not just in the air
 	@Override
     	public boolean onItemUse(ItemStack itemstack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ)
     	{
@@ -891,7 +891,7 @@ public class ItemStore extends Item
         	return false;
     	}
     	
-    	// 2. onItemRightClick
+    	// 2. onItemRightClick - should open even if you click in the air
     	@Override
 	public ItemStack onItemRightClick(ItemStack itemstack, World world, EntityPlayer player)
 	{
