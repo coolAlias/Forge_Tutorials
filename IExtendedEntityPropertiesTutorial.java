@@ -642,18 +642,109 @@ Now try it. Yay! It works!
 
 In conjunction with a custom ItemGoldCoin and LivingDropsEvent, I'm sure you can see
 how this could be used.
+/**
+ * Step 5: Getting your custom data to persist through player death
+ */
+/*
+First, many thanks and godly praise upon the legend that is Mithion, the creator of IExtendedEntityProperties.
+Without him, not only this particular section, but all of this stuff would not be possible. Truly amazing work
+by him that allows us to do so much with ease.
 
-FINAL NOTE:
-If you use IExtendedEntityProperties to change something that affects the CLIENT-side of things,
-such as an entity's step height or player.capabilities such as allowFlying, it's been my experience
-that you need to send a Packet to the player letting them know about their new abilities.
+Just had to be said. Anyways, as some have noticed, if you die and respawn, the data you so carefully created,
+registered, sent in packets and saved to NBT is RESET to the initial values when the player dies. This has to
+do with the way player NBT is stored and retrieved during death, and there's nothing we can do about it. At
+least, nothing directly.
 
-Rest assured that all of the things I showed above will work fine without packets, but be warned
-that not everything necessarily will. Server/Client communications is not my area of expertise,
-or I would gladly try to explain it. As it is, I barely understand it myself and am constantly
-battling to figure out what information I need to send where, if I even need to send it at all.
+We need to find a way to store the IExtendedEntityProperties data outside of the player when the player dies,
+and retrieve it when the player respawns. I knew this, but I never would have thought of where to store it without
+Mithion's assistance. Though I guess it could be stored anywhere that persists...
 
-To learn more about sending and receiving packets, go to http://www.minecraftforge.net/wiki/Tutorials/Packet_Handling
+Enough blabbing. The most convenient way to store extended properties is bundled as NBT, and we'll be storing it
+in a HashMap with the player's username as the key. We'll store this map in our CommonProxy class.
+*/
+public class CommonProxy implements IGuiHandler
+{
+	/** Used to store IExtendedEntityProperties data temporarily between player death and respawn or dimension change */
+	private static HashMap<String, NBTTagCompound> extendedEntityData = new HashMap<String, NBTTagCompound>();
+	
+	public void registerRenderers() {}
+	
+	public int addArmor(String string) {
+		return 0;
+	}
 
-If anyone cares to share their knowledge, please do! Thanks!
+	@Override
+	public Object getServerGuiElement(int guiId, EntityPlayer player, World world, int x, int y, int z)
+	{
+		return null;
+	}
+
+	@Override
+	public Object getClientGuiElement(int guiId, EntityPlayer player, World world, int x, int y, int z)
+	{
+		return null;
+	}
+	
+	/**
+	 * Adds an entity's custom data to the map for temporary storage
+	 * @param compound An NBT Tag Compound that stores the IExtendedEntityProperties data only
+	 */
+	public void storeEntityData(String name, NBTTagCompound compound)
+	{
+		extendedEntityData.put(name, compound);
+	}
+	
+	/**
+	 * Removes the compound from the map to prevent bloat and multiple occurrences of the same key
+	 * Returns the NBT tag stored for name or null if none exists
+	 */
+	public NBTTagCompound getEntityData(String name)
+	{
+		NBTTagCompound entityData = extendedEntityData.get(name);
+		extendedEntityData.remove(name);
+		return entityData;
+	}
+}
+/*
+Ok, now we have the framework up that will store our data externally to the player's NBT, which we can access
+from our EventHandler. Now all we need to do is store the data when the player dies and retrieve it when the
+player re-joins the world. We don't use LivingSpawnEvent because that event is not triggered during the process
+of dying and being respawned, as much as you would think otherwise.
+*/
+// These are methods in the EventHandler class, in case you don't know that by now
+
+// we need to add this new event - it is called for every living entity upon death
+@ForgeSubscribe
+public void onLivingDeathEvent(LivingDeathEvent event)
+{
+	// we only want to save data for players (most likely, anyway)
+	if (!event.entity.worldObj.isRemote && event.entity instanceof EntityPlayer) {
+		// create a new NBT Tag Compound to store the IExtendedEntityProperties data
+		NBTTagCompound playerData = new NBTTagCompound();
+		// write the data to the new compound
+		((ExtendedPlayer)(event.entity.getExtendedProperties(ExtendedPlayer.EXT_PROP_NAME))).saveNBTData(playerData);
+		// and store it in our proxy
+		proxy.storeEntityData(((EntityPlayer) event.entity).username, playerData);
+	}
+}
+
+// we already have this event, but we need to modify it some
+@ForgeSubscribe
+public void onEntityJoinWorld(EntityJoinWorldEvent event)
+{
+	if (!event.entity.worldObj.isRemote && event.entity instanceof EntityPlayer) {
+		// before syncing the properties, we must first check if the player has some saved in the proxy
+		// recall that 'getEntityData' also removes it from the map, so be sure to store it locally
+		NBTTagCompound playerData = proxy.getEntityData(((EntityPlayer) event.entity).username);
+		// make sure the compound isn't null
+		if (playerData != null) {
+			// then load the data back into the player's IExtendedEntityProperties
+			((ExtendedPlayer)(event.entity.getExtendedProperties(ExtendedPlayer.EXT_PROP_NAME))).loadNBTData(playerData);
+		}
+		// finally, we sync the data between server and client (we did this earlier in 3.3)
+		((ExtendedPlayer)(event.entity.getExtendedProperties(ExtendedPlayer.EXT_PROP_NAME))).syncExtendedProperties();
+	}
+}
+/*
+And that's how it's done, folks. Happy modding. :D
 */
