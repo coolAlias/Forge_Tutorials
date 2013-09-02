@@ -640,8 +640,8 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event)
 Be sure to create the 'addGold(int)' and 'getGold()' methods in ExtendedLivingBase.
 Now try it. Yay! It works!
 
-In conjunction with a custom ItemGoldCoin and LivingDropsEvent, I'm sure you can see
-how this could be used.
+In conjunction with a custom ItemGoldCoin, LivingDropsEvent and EntityItemPickupEvent, I'm sure you can see how
+this could be used to store large amounts of coin without clogging up the inventory.
 /**
  * Step 5: Getting your custom data to persist through player death
  */
