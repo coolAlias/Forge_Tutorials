@@ -668,10 +668,6 @@ public class CommonProxy implements IGuiHandler
 	private static HashMap<String, NBTTagCompound> extendedEntityData = new HashMap<String, NBTTagCompound>();
 	
 	public void registerRenderers() {}
-	
-	public int addArmor(String string) {
-		return 0;
-	}
 
 	@Override
 	public Object getServerGuiElement(int guiId, EntityPlayer player, World world, int x, int y, int z)
