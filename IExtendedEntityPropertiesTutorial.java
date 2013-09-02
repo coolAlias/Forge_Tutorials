@@ -742,5 +742,26 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event)
 	}
 }
 /*
+But wait, didn't we add TWO extended properties? How can a single entity store two different properties?
+
+Easy, append the properties name to the username when storing and retrieving. That way, each property is
+stored with its own unique name and the player it belongs to.
+*/
+// save player data:
+proxy.storeEntityData(((EntityPlayer) event.entity).username + ExtendedPlayer.EXT_PROP_NAME, playerData);
+// save living data:
+proxy.storeEntityData(((EntityPlayer) event.entity).username + ExtendedLiving.EXT_PROP_NAME, playerData);
+
+// load player data:
+NBTTagCompound playerData = proxy.getEntityData(((EntityPlayer) event.entity).username + ExtendedPlayer.EXT_PROP_NAME);
+// load living data
+NBTTagCompound playerData = proxy.getEntityData(((EntityPlayer) event.entity).username + ExtendedLiving.EXT_PROP_NAME);
+/*
+Note that this is still saving data ONLY for player entities, but a player with multiple types of Extended Properties.
+
+This will also allow inter-mod compatibility if, for example, two mods both add custom data to the player using
+IExtendedEntityProperties AND you've given your properties a unique name (NOT something like "ExtendedPlayer", which
+I used in the tutorial).
+
 And that's how it's done, folks. Happy modding. :D
 */
