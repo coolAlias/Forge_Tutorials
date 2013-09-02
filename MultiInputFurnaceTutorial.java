@@ -31,10 +31,25 @@ public class ContainerArcaneInscriber extends Container
 	private int lastItemBurnTime;
 
 	// NOTE that here you could add as many slots as you want.
+
 	// I have a complementary discharge slot array because the items I use as fuel
 	// are rechargeable and I want to get them back
+
+	// The way I use INPUT slots is both for fuel AND to determine the output result
+
+	// You'll probably just want to use it for the latter, in which case you'll need to add a FUEL slot
 	public static final int INPUT[] = {0,1,2,3,4,5,6};
+
+	// delete the DISCHARGE slots if you don't need to keep your used up fuel
 	public static final int DISCHARGE[] = {7,8,9,10,11,12,13};
+
+	// BLANK_SCROLL is NOT fuel, but a final requirement to actually inscribe a scroll. This allows me
+	// to set up a recipe in the rune slots and see what it is first before actually consuming the runes. You
+	// probably would change this slot to store FUEL instead, like most furnaces do.
+
+	// RECIPE just stores the current recipe so I can keep inscribing scrolls even after the runes are used
+	// up and to display the recipe on screen. You probably don't need this slot.
+
 	public static final int RUNE_SLOTS = INPUT.length, BLANK_SCROLL = RUNE_SLOTS*2, RECIPE = BLANK_SCROLL+1,
 			OUTPUT = RECIPE+1, INV_START = OUTPUT+1, INV_END = INV_START+26, HOTBAR_START = INV_END+1,
 			HOTBAR_END= HOTBAR_START+8;
@@ -201,6 +216,8 @@ public class ContainerArcaneInscriber extends Container
 /**
  * Step 2: Make your Custom Slots, if needed
  */
+// Most furnace-like containers will only ever need the first slot I make here;
+// the other two are particular to my special case.
 public class SlotArcaneInscriber extends Slot
 {
 	/** The player that is using the GUI where this slot resides. */
@@ -541,6 +558,8 @@ public class TileEntityArcaneInscriber extends TileEntity implements ISidedInven
 				if (flag1) { this.onInventoryChanged(); }
 
 				if (this.canInscribe()) {
+					// This is the equivalent of getItemBurnTime from furnace. Note again that I am setting
+					// my burn time based on an INPUT slot, even though this is generally done with FUEL
 					this.currentInscribeTime = this.getInscriberChargeTime(this.inscriberInventory[0]);
 				}
 
@@ -548,7 +567,10 @@ public class TileEntityArcaneInscriber extends TileEntity implements ISidedInven
 				{
 					flag1 = true;
 
-					// Decrement input (fuel) slots, increment discharge slots if you have them
+					// This is where you decrement your FUEL slot's inventory.
+					// However, since I use INPUT as FUEL and need to save the used up FUEL in DISCHARGE,
+					// I will use a for loop to decrement all of the inputs and increment all of the discharge slots
+					// Yours will probably look much simpler - look at the vanilla Furnace code to see an example
 					for (int i = 0; i < ContainerArcaneInscriber.RUNE_SLOTS; ++i)
 					{
 						if (this.inscriberInventory[ContainerArcaneInscriber.INPUT[i]] != null)
@@ -697,7 +719,9 @@ public class TileEntityArcaneInscriber extends TileEntity implements ISidedInven
 				{
 					inscriberInventory[ContainerArcaneInscriber.OUTPUT].stackSize += inscribeResult.stackSize;
 				}
-
+				
+				// This is where you'd decrement all your INPUT slots, but for me, I only need to do that for
+				// BLANK_SCROLL since I used my INPUT as fuel earlier
 				--this.inscriberInventory[ContainerArcaneInscriber.BLANK_SCROLL].stackSize;
 
 				if (this.inscriberInventory[ContainerArcaneInscriber.BLANK_SCROLL].stackSize <= 0)
