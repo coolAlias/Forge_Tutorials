@@ -642,31 +642,27 @@ Now try it. Yay! It works!
 
 In conjunction with a custom ItemGoldCoin, LivingDropsEvent and EntityItemPickupEvent, I'm sure you can see how
 this could be used to store large amounts of coin without clogging up the inventory.
-/**
- * Step 5: Getting your custom data to persist through player death
- */
-/*
-First, many thanks and godly praise upon the legend that is Mithion, the creator of IExtendedEntityProperties.
+Step 5: Getting your custom data to persist through player death
+[SPOILER]
+First, many thanks and godly praise upon the legend that is Mithion, creator of IExtendedEntityProperties.
 Without him, not only this particular section, but all of this stuff would not be possible. Truly amazing work
 by him that allows us to do so much with ease.
 
-Just had to be said. Anyways, as some have noticed, if you die and respawn, the data you so carefully created,
-registered, sent in packets and saved to NBT is RESET to the initial values when the player dies. This has to
-do with the way player NBT is stored and retrieved during death, and there's nothing we can do about it. At
-least, nothing directly.
+Just had to be said. Anyways, as some have noticed, if you die and respawn, the data you so carefully created, registered, sent in packets and saved to NBT is RESET to the initial values when the player dies. This has to do with the way player NBT is stored and retrieved during death, and there's nothing we can do about it. At least, nothing directly.
 
-We need to find a way to store the IExtendedEntityProperties data outside of the player when the player dies,
-and retrieve it when the player respawns. I knew this, but I never would have thought of where to store it without
-Mithion's assistance. Though I guess it could be stored anywhere that persists...
+We need to find a way to store the IExtendedEntityProperties data outside of the player when the player dies, and retrieve it when the player respawns. I knew this, but I never would have thought of where to store it without Mithion's assistance. Though I guess it could be stored anywhere that persists...
 
-Enough blabbing. The most convenient way to store extended properties is bundled as NBT, and we'll be storing it
-in a HashMap with the player's username as the key. We'll store this map in our CommonProxy class.
+Also thanks to Seigneur_Necron for some excellent pointers on good coding practice. This helped clean
+
+up aspects of the code and improve the overall quality. Merci!
+
+Enough blabbing. The most convenient way to store extended properties is bundled as NBT, and we'll be storing it in a HashMap with the player's username as the key. We'll store this map in our CommonProxy class.
 */
 public class CommonProxy implements IGuiHandler
 {
-	/** Used to store IExtendedEntityProperties data temporarily between player death and respawn or dimension change */
-	private static HashMap<String, NBTTagCompound> extendedEntityData = new HashMap<String, NBTTagCompound>();
-	
+	/** Used to store IExtendedEntityProperties data temporarily between player death and respawn */
+	private static final Map<String, NBTTagCompound> extendedEntityData = new HashMap<String, NBTTagCompound>();
+
 	public void registerRenderers() {}
 
 	@Override
@@ -680,32 +676,31 @@ public class CommonProxy implements IGuiHandler
 	{
 		return null;
 	}
-	
+
 	/**
-	 * Adds an entity's custom data to the map for temporary storage
-	 * @param compound An NBT Tag Compound that stores the IExtendedEntityProperties data only
-	 */
-	public void storeEntityData(String name, NBTTagCompound compound)
+	* Adds an entity's custom data to the map for temporary storage
+	* @param compound An NBT Tag Compound that stores the IExtendedEntityProperties data only
+	*/
+	public static void storeEntityData(String name, NBTTagCompound compound)
 	{
 		extendedEntityData.put(name, compound);
 	}
-	
+
 	/**
-	 * Removes the compound from the map to prevent bloat and multiple occurrences of the same key
-	 * Returns the NBT tag stored for name or null if none exists
-	 */
-	public NBTTagCompound getEntityData(String name)
+	* Removes the compound from the map and returns the NBT tag stored for name or null if none exists
+	*/
+	public static NBTTagCompound getEntityData(String name)
 	{
-		NBTTagCompound entityData = extendedEntityData.get(name);
-		extendedEntityData.remove(name);
-		return entityData;
+		return extendedEntityData.remove(name);
 	}
 }
 /*
 Ok, now we have the framework up that will store our data externally to the player's NBT, which we can access
 from our EventHandler. Now all we need to do is store the data when the player dies and retrieve it when the
-player re-joins the world. We don't use LivingSpawnEvent because that event is not triggered during the process
-of dying and being respawned, as much as you would think otherwise.
+player re-joins the world.
+
+We don't use LivingSpawnEvent because that event is not triggered during the process of dying and being respawned,
+as much as you would think otherwise.
 */
 // These are methods in the EventHandler class, in case you don't know that by now
 
@@ -714,7 +709,10 @@ of dying and being respawned, as much as you would think otherwise.
 public void onLivingDeathEvent(LivingDeathEvent event)
 {
 	// we only want to save data for players (most likely, anyway)
-	if (!event.entity.worldObj.isRemote && event.entity instanceof EntityPlayer) {
+	if (!event.entity.worldObj.isRemote && event.entity instanceof EntityPlayer)
+	{
+		// NOTE: See step 6 for a way to do this all in one line!!!
+		
 		// create a new NBT Tag Compound to store the IExtendedEntityProperties data
 		NBTTagCompound playerData = new NBTTagCompound();
 		// write the data to the new compound
@@ -728,12 +726,16 @@ public void onLivingDeathEvent(LivingDeathEvent event)
 @ForgeSubscribe
 public void onEntityJoinWorld(EntityJoinWorldEvent event)
 {
-	if (!event.entity.worldObj.isRemote && event.entity instanceof EntityPlayer) {
+	if (!event.entity.worldObj.isRemote && event.entity instanceof EntityPlayer)
+	{
+		// NOTE: See step 6 for a way to do this all in one line!!!
+		
 		// before syncing the properties, we must first check if the player has some saved in the proxy
 		// recall that 'getEntityData' also removes it from the map, so be sure to store it locally
 		NBTTagCompound playerData = proxy.getEntityData(((EntityPlayer) event.entity).username);
 		// make sure the compound isn't null
-		if (playerData != null) {
+		if (playerData != null)
+		{
 			// then load the data back into the player's IExtendedEntityProperties
 			((ExtendedPlayer)(event.entity.getExtendedProperties(ExtendedPlayer.EXT_PROP_NAME))).loadNBTData(playerData);
 		}
@@ -762,6 +764,140 @@ Note that this is still saving data ONLY for player entities, but a player with 
 This will also allow inter-mod compatibility if, for example, two mods both add custom data to the player using
 IExtendedEntityProperties AND you've given your properties a unique name (NOT something like "ExtendedPlayer", which
 I used in the tutorial).
+*/
+/**
+ * Step 6: Improvements to the code, courtesy of Seigneur_Necron
+ */
+/*
+Some of these I incorporated into the above tutorial, but there are more that I didn't. Here are some really
+great tips from Seigneur_Necron.
+*/
+/**
+ * 6.1: Create a simple method that returns your ExtendedProperties
+ */
+public static ExtendedPlayer get(EntityPlayer player)
+{
+	return (ExtendedPlayer) player.getExtendedProperties(EXT_PROP_NAME);
+}
+// Here's how it looks in use. I know which one I prefer ;)
+
+// Seigneur_Necron's elegance:
+ExtendedPlayer props = ExtendedPlayer.get(player);
+
+// vs my original super-cumbersome method:
+ExtendedPlayer props = (ExtendedPlayer) event.entity.getExtendedProperties(ExtendedPlayer.EXT_PROP_NAME);
+/**
+ * 6.2: Create methods to save / load ExtendedProperty data to your CommonProxy
+ */
+/**
+ * Makes it look nicer in the methods save/loadProxyData
+ */
+private static String getSaveKey(EntityPlayer player) {
+	return player.username + ":" + EXT_PROP_NAME;
+}
+
+/**
+ * Does everything I did in onLivingDeathEvent and it's static,
+ * so you now only need to use the following in the above event:
+ * ExtendedPlayer.saveProxyData((EntityPlayer) event.entity));
+ */
+public static void saveProxyData(EntityPlayer player)
+{
+	ExtendedPlayer playerData = ExtendedPlayer.get(player);
+	NBTTagCompound savedData = new NBTTagCompound();
+
+	playerData.saveNBTData(savedData);
+	// Note that we made the CommonProxy method storeEntityData static,
+	// so now we don't need an instance of CommonProxy to use it! Great!
+	CommonProxy.storeEntityData(getSaveKey(player), savedData);
+}
+
+/**
+ * This cleans up the onEntityJoinWorld event by replacing most of the code
+ * with a single line: ExtendedPlayer.loadProxyData((EntityPlayer) event.entity));
+ */
+public static void loadProxyData(EntityPlayer player)
+{
+	ExtendedPlayer playerData = ExtendedPlayer.get(player);
+	NBTTagCompound savedData = CommonProxy.getEntityData(getSaveKey(player));
+
+	if(savedData != null) {
+		playerData.loadNBTData(savedData);
+	}
+	
+	// note we renamed 'syncExtendedProperties' to 'syncProperties' because yay, it's shorter
+	playerData.syncProperties();
+}
+/**
+ * 6.3: Create a 'register' method to clean up EntityConstructing code:
+ */
+/**
+ * Used to register these extended properties for the player during EntityConstructing event
+ */
+// Note that it's static, so we can call it like this in the event:
+// ExtendedPlayer.register((EntityPlayer) event.entity);
+public static void register(EntityPlayer player)
+{
+	player.registerExtendedProperties(ExtendedPlayer.EXT_PROP_NAME, new ExtendedPlayer(player));
+}
+/**
+ * 6.4: Fancy packet handling stuff that is a bit beyond me, but I'll put it here for completeness.
+ */
+public class StargatePacketHandler implements IPacketHandler
+{
+
+@Override
+public void onPacketData(INetworkManager manager, Packet250CustomPayload packet, Player player)
+{
+	if(packet != null && packet.channel != null && packet.data != null)
+	{
+		if(packet.channel.equals(StargateMod.CHANEL_TILE_ENTITY) && packet.length >= 20) {
+			this.handleTileEntityPacket(packet, (EntityPlayer) player);
+		}
+		else if(packet.channel.equals(StargateMod.CHANEL_COMMANDS) && packet.length >= 20) {
+			this.handleCommandPacket(packet, (EntityPlayer) player);
+		}
+		else if(packet.channel.equals(StargateMod.CHANEL_PLAYER_DATA) && packet.length >= 4) {
+			this.handlePlayerDataPacket(packet, (EntityPlayer) player);
+		}
+	}
+}
+
+protected void handlePlayerDataPacket(Packet250CustomPayload packet, EntityPlayer player)
+{
+	DataInputStream input = new DataInputStream(new ByteArrayInputStream(packet.data));
+
+	try {
+		int id = input.readInt();
+		Class<? extends PlayerDataList> clazz = getClassFromPlayerDataPacketId(id);
+
+		PlayerDataList playerData = null;
+
+		if(clazz == PlayerTeleporterData.class) {
+			playerData = PlayerTeleporterData.get(player);
+		}
+		else if(clazz == PlayerStargateData.class) {
+			playerData = PlayerStargateData.get(player);
+		}
+
+		if(playerData != null) {
+			playerData.loadProperties(input);
+		}
+
+		input.close();
+	}
+	catch(IOException argh) {
+		StargateMod.debug("Error while reading custom player data from DataInputStream.", Level.SEVERE, true);
+		argh.printStackTrace();
+		return;
+	}
+}
+
+// Other stuff...
+
+}
+/*
+Thanks again to Seigneur_Necron for these great tips!
 
 And that's how it's done, folks. Happy modding. :D
 */
