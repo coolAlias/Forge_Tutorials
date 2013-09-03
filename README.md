@@ -30,6 +30,9 @@ If you'd prefer to read the tutorials on the forums, here are the links:
 - Rendering Your Custom Item Texture:
   http://www.minecraftforum.net/topic/1892995-rendering-your-custom-item-texture/
 
+- Multi-Input/Output Furnace with Variable-Input Recipes:
+  http://www.minecraftforum.net/topic/1961477-multi-inputoutput-furnace-with-variable-input-recipes/
+
 - Overriding shift-click in custom Containers:
   http://www.minecraftforum.net/topic/1919622-custom-container-how-to-properly-override-shift-clicking/
 
