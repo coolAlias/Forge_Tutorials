@@ -67,17 +67,31 @@ public class ExtendedPlayer implements IExtendedEntityProperties
 	@Override
 	public void saveNBTData(NBTTagCompound compound)
 	{
-		// We only need to save current and max mana
-		compound.setInteger("CurrentMana", this.currentMana);
-		compound.setInteger("MaxMana", this.maxMana);
+		// We need to create a new tag compound that will save everything for our Extended Properties
+		NBTTagCompound properties = new NBTTagCompound();
+		
+		// We only have 2 variables currently; save them both to the new tag
+		properties.setInteger("CurrentMana", this.currentMana);
+		properties.setInteger("MaxMana", this.maxMana);
+		
+		// Now add our custom tag to the player's tag with a unique name (our property's name)
+		// This will allow you to save multiple types of properties and distinguish between them
+		// If you only have one type, it isn't as important, but it will still avoid conflicts between
+		// your tag names and vanilla tag names. For instance, if you add some "Items" tag,
+		// that will conflict with vanilla. Not good. So just use a unique tag name.
+		compound.setTag(EXT_PROP_NAME, properties);
+		
 	}
 
 	// Load whatever data you saved
 	@Override
 	public void loadNBTData(NBTTagCompound compound)
 	{
-		this.currentMana = compound.getInteger("CurrentMana");
-		this.maxMana = compound.getInteger("MaxMana");
+		// Here we fetch the unique tag compound we set for this class of Extended Properties
+		NBTTagCompound properties = (NBTTagCompound) compound.getTag(EXT_PROP_NAME);
+		// Get our data from the custom tag compound
+		this.currentMana = properties.getInteger("CurrentMana");
+		this.maxMana = properties.getInteger("MaxMana");
 		// Just so you know it's working, add this line:
 		System.out.println("[TUT PROPS] Mana from NBT: " + this.currentMana + "/" + this.maxMana);
 	}
