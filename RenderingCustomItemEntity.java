@@ -248,6 +248,25 @@ Your custom entity should now render correctly in the world! Congratulations!
 */
 
 /**
+ * Step 3.1: A Note about ResourceLocation
+ */
+/*
+Although you most likely won't be using these for rendering thrown entities, I think this deserves mention.
+For Minecraft 1.6.2, textures are no longer bound, but set using Resource Location. If you are rendering anything
+that doesn't use an Item Icon, you will need to use this to get your custom texture showing up.
+
+ResourceLocation takes 2 parameters: ModId and the path to your texture at the location:
+"src/minecraft/assets/modid/"
+*/
+ResourceLocation iconLocation = new ResourceLocation("yourmodname", "textures/entity/yourtexture.png");
+
+// For Tile Entity Special Renders, the resource location is 'bound' using this code:
+this.func_110628_a(iconLocation);
+
+// For Gui's, the resource location is 'bound' using this code:
+this.mc.func_110434_K().func_110577_a(iconLocation);
+
+/**
  * Step 4: Creating a custom Render, e.g. RenderThrowingRock
  */
 /*
