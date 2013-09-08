@@ -3,9 +3,11 @@
 /*
 If you want to change any type of default Minecraft behavior, chances are there is a Forge Event that handles it.
 
-There are Player Events, Living Events, Item Events, World Events, TerrainGenEvents, Minecart Events... there's just so much you can do with these it's incredible.
+There are Player Events, Living Events, Item Events, World Events, TerrainGenEvents, Minecart Events... there's just
+so much you can do with these it's incredible.
 
-I personally prefer using EventHandler over TickHandler for this very reason - most things you could ever want to do already have a framework built to handle it, whereas Tick Handler you have to build it all yourself.
+I personally prefer using EventHandler over TickHandler for this very reason - most things you could ever want to do
+already have a framework built to handle it, whereas Tick Handler you have to build it all yourself.
 
 Here's how to make one:
 */
