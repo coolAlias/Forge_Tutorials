@@ -1,11 +1,11 @@
 /** Implementing and Using Forge's EventHandler */
 
 /*
-There still seems to be lots of questions about how to make and use an EventHandler,
-so here's another tutorial.
+If you want to change any type of default Minecraft behavior, chances are there is a Forge Event that handles it.
 
-I personally prefer using EventHandler over TickHandler because it gives you much
-finer specificity as well as more parameters to work with.
+There are Player Events, Living Events, Item Events, World Events, TerrainGenEvents, Minecart Events... there's just so much you can do with these it's incredible.
+
+I personally prefer using EventHandler over TickHandler for this very reason - most things you could ever want to do already have a framework built to handle it, whereas Tick Handler you have to build it all yourself.
 
 Here's how to make one:
 */
@@ -173,4 +173,20 @@ Uses: Useful for entity.motionY += 10.0D. Just give it a try
 Variables: EntityLivingBase entity, DamageSource source, float ammount
 Called when an entity is damaged, but before any damage is applied
 Uses: Another super useful one if you have custom armor that reduces fire damage, increases damage taken from magic, resurrects the entity if ammount is greater than current health or whatever.
+
+10. EntityInteractEvent
+Variables: EntityPlayer player, Entity target
+Called when the player right-clicks on an entity, such as a cow
+Uses: Gee, you could do anything with this. One use could be getting milk into your custom bucket...
+
+11. EntityItemPickupEvent
+Variables: EntityPlayer player, EntityItem item
+Called when the player picks up an item
+Uses: This one is useful for special items that need handling on pickup; an example would be if you made
+something similar to experience orbs, mana orbs for instance, that replenish mana rather than adding an item to inventory
+
+12. HarvestCheck
+Variables: EntityPlayer player, Block block, boolean success
+Called when the player breaks a block before the block releases its drops
+Uses: Coupled with the BreakSpeed event, this is perhaps the best way to change the behavior of mining.
 */
