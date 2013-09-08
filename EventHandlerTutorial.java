@@ -130,7 +130,9 @@ public void methodName(EventType event)
 1. ArrowNockEvent
 Variables: EntityPlayer player, ItemStack result
 Usually called from 'onItemRightClick'.
-Uses: It is cancelable, so if some conditions are not met (e.g. no arrows in inventory) you could cancel it and stop the player from setting the item in use. One thing I use it for is to set a boolean 'isAiming', which I can then interrupt if the player takes damage or some such (using another boolean 'wasInterrupted')
+Uses: It is cancelable, so if some conditions are not met (e.g. no arrows in inventory) you could cancel it and stop
+the player from setting the item in use. One thing I use it for is to set a boolean 'isAiming', which I can then
+interrupt if the player takes damage or some such (using another boolean 'wasInterrupted')
 
 2. ArrowLooseEvent
 Variables: EntityPlayer player, ItemStack bow, int charge
@@ -145,17 +147,23 @@ Uses: Useful if you need to add ExtendedEntityProperties.
 4. EntityJoinWorldEvent
 Variables: Entity entity, World world
 Called when an entity joins the world for the first time.
-Uses: Useful for synchronizing ExtendedEntityProperties, giving your player an item when spawned or any other number of things.
+Uses: Useful for synchronizing ExtendedEntityProperties, giving your player an item when spawned or any other number
+of things.
 
 5. LivingUpdateEvent
 Variables: EntityLivingBase entity
 Called every tick at the beginning of the entity's onUpdate method.
-Uses: This is probably the most useful Event. You can allow player's to fly if holding an item or wearing your armor set, you can modify a player's fall speed here, add potion effects or anything else you can imagine. It's really really handy.
+Uses: This is probably the most useful Event. You can allow player's to fly if holding an item or wearing your armor
+set, you can modify a player's fall speed here, add potion effects or anything else you can imagine. It's really
+really handy.
 
 6. LivingDropsEvent
-Variables: EntityLivingBase entity, DamageSource source, ArrayList<EntityItem> drops, int lootingLevel, boolean recentlyHit, int specialDropValue
+Variables: EntityLivingBase entity, DamageSource source, ArrayList<EntityItem> drops, int lootingLevel, boolean
+recentlyHit, int specialDropValue
 Called when an entity is killed and drops items.
-Uses: Handy if you want to modify a vanilla mobs drops or only drop your custom item if it was killed from your custom DamageSource. You can also remove items from drops, adjust it based on the looting enchantment level of the item used to kill it, etc. Pretty useful.
+Uses: Handy if you want to modify a vanilla mobs drops or only drop your custom item if it was killed from your custom
+DamageSource. You can also remove items from drops, adjust it based on the looting enchantment level of the item used
+to kill it, etc. Pretty useful.
 
 7. LivingFallEvent
 Variables: EntityLivingBase entity, float distance
@@ -164,7 +172,8 @@ SPECIAL NOTE: This event is NOT called while in Creative Mode; PlayerFlyableFall
 Uses: It is cancelable, so 'event.setCanceled(true)' will preclude further processing of the fall.
 You can also modify the distance fallen here, but keep in mind this is ONLY on impact. If you want
 to modify fall distance only while certain conditions are met, better to do it in LivingUpdateEvent.
-Also, be sure you are modifying 'event.distance' and NOT 'entity.fallDistance' or you won't change the outcome of the fall
+Also, be sure you are modifying 'event.distance' and NOT 'entity.fallDistance' or you won't change the outcome of the
+fall.
 
 8. LivingJumpEvent
 Variables: EntityLivingBase entity
@@ -174,7 +183,8 @@ Uses: Useful for entity.motionY += 10.0D. Just give it a try
 9. LivingHurtEvent
 Variables: EntityLivingBase entity, DamageSource source, float ammount
 Called when an entity is damaged, but before any damage is applied
-Uses: Another super useful one if you have custom armor that reduces fire damage, increases damage taken from magic, resurrects the entity if ammount is greater than current health or whatever.
+Uses: Another super useful one if you have custom armor that reduces fire damage, increases damage taken from magic,
+resurrects the entity if ammount is greater than current health or whatever.
 
 10. EntityInteractEvent
 Variables: EntityPlayer player, Entity target
@@ -185,7 +195,8 @@ Uses: Gee, you could do anything with this. One use could be getting milk into y
 Variables: EntityPlayer player, EntityItem item
 Called when the player picks up an item
 Uses: This one is useful for special items that need handling on pickup; an example would be if you made
-something similar to experience orbs, mana orbs for instance, that replenish mana rather than adding an item to inventory
+something similar to experience orbs, mana orbs for instance, that replenish mana rather than adding an item to
+inventory
 
 12. HarvestCheck
 Variables: EntityPlayer player, Block block, boolean success
