@@ -15,6 +15,17 @@ EntityLivingBase entities.
 Prerequisites:
 1. Know how to set up and use Forge Events. See my tutorial on creating an EventHandler.
 2. Willingness to read carefully.
+
+IMPORTANT NOTE: Using IExtendedEntityProperties adds new data to entities and, as such, will require your mod to be
+installed server-side because the server handles initializing, maintaining, loading and saving of all data. This means
+your @NetworkMod line will look like this:
+*/
+@NetworkMod(clientSideRequired=true, serverSideRequired=[b]true[/b], // packetHandler stuff)
+/*
+If you need to display any of this information, such as in a Gui, you need to send a packet to the client with the data
+to display. This is the only kind of information the client needs to know.
+
+Thanks to Pawaox for bringing this to my attention, and Seigneur_Necron for confirming the requirements.
 */
 /**
  * Step 1: Create a class that implements IExtendedEntityProperties
