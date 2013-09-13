@@ -10,6 +10,23 @@ I've included everything you'll need to get it working, so there are no prerequi
 to this tutorial, though it's best if you at least know how to set up a mod.
 If you know how to make a custom Item or have experience with TileEntity Gui's, then
 you probably won't have any trouble with this.
+
+IMPORTANT NOTE: Adding new data to an item's NBT may require your mod to be installed
+server-side because the server handles initializing, maintaining, loading and saving
+of all data. So if your inventory-storing item works great in single player but doesn't
+save items in multi-player, you should try requiring your mod server side and see if it
+works then. This means your @NetworkMod line will look like this:
+
+@NetworkMod(clientSideRequired=true, serverSideRequired=true, // packetHandler stuff)
+
+For inventories and itemstacks, the correct information is usually requested automatically by
+the client, so you shouldn't have to worry about packets in most scenarios.
+
+Finally, using Keyboard will crash the server, so you need to set up a custom KeyHandler class.
+A key binding tutorial can be found here:
+http://www.minecraftforum.net/topic/1798625-162sobiohazardouss-forge-keybinding-tutorial/
+
+Now on to the tutorial!
 */
 
 /**
