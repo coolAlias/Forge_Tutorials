@@ -2,23 +2,28 @@
  * Extended Entity Properties Tutorial
  */
 /*
-In this tutorial I will cover how to add variables to an entity by using Forge's
-IExtendedEntityProperties. How did I learn all this stuff, you ask? Well, it's
-all pretty well documented within the Forge code itself. Hover your mouse over
-most Forge methods and you'll get a great 'tooltip' pop up that explains pretty
-much everything about it. Or just open up the class you're curious about. Go ahead,
-give it a try! If it still doesn't make sense, then read on :)
+In this tutorial I will cover how to add variables to an entity by using Forge's IExtendedEntityProperties. How did I
+learn all this stuff, you ask? Well, it's all pretty well documented within the Forge code itself. Hover your mouse
+over most Forge methods and you'll get a great 'tooltip' pop up that explains pretty much everything about it. Or just
+open up the class you're curious about. Go ahead, give it a try! If it still doesn't make sense, then read on. :)
 
-We will add mana to all players, show how to use it, and add gold coins to all
-EntityLivingBase entities.
+We will add mana to all players, show how to use it, and add gold coins to all EntityLivingBase entities.
+
+We will also use our custom data in a Gui which involves setting up a packet handler to send information to the client.
+
+Finally, we will make it so our custom data persists even when the player dies and respawns.
+
+If you read all the way through and follow all of the steps correctly, your custom properties will also be multi-player
+compatible straight out of the box, so to speak. Tested using the Eclipse server.
 
 Prerequisites:
 1. Know how to set up and use Forge Events. See my tutorial on creating an EventHandler.
 2. Willingness to read carefully.
 
-IMPORTANT NOTE: Using IExtendedEntityProperties adds new data to entities and, as such, will require your mod to be
-installed server-side because the server handles initializing, maintaining, loading and saving of all data. This means
-your @NetworkMod line will look like this:
+IMPORTANT NOTE: Using IExtendedEntityProperties adds new data to entities, and the server handles initializing,
+maintaining, loading and saving of all data. For multi-player compatibility outside of the Eclipse server environment,
+you must require your mod to be installed server-side for the data to exist. This means your @NetworkMod line will
+look like this:
 */
 @NetworkMod(clientSideRequired=true, serverSideRequired=[b]true[/b], // packetHandler stuff)
 /*
@@ -667,21 +672,30 @@ Now try it. Yay! It works!
 
 In conjunction with a custom ItemGoldCoin, LivingDropsEvent and EntityItemPickupEvent, I'm sure you can see how
 this could be used to store large amounts of coin without clogging up the inventory.
-Step 5: Getting your custom data to persist through player death
-[SPOILER]
+*/
+/**
+ * Step 5: Getting your custom data to persist through player death
+ */
+/*
 First, many thanks and godly praise upon the legend that is Mithion, creator of IExtendedEntityProperties.
 Without him, not only this particular section, but all of this stuff would not be possible. Truly amazing work
 by him that allows us to do so much with ease.
 
-Just had to be said. Anyways, as some have noticed, if you die and respawn, the data you so carefully created, registered, sent in packets and saved to NBT is RESET to the initial values when the player dies. This has to do with the way player NBT is stored and retrieved during death, and there's nothing we can do about it. At least, nothing directly.
+Just had to be said. Anyways, as some have noticed, if you die and respawn, the data you so carefully created,
+registered, sent in packets and saved to NBT is RESET to the initial values when the player dies. This has to do
+with the way player NBT is stored and retrieved during death, and there's nothing we can do about it. At least,
+nothing directly.
 
-We need to find a way to store the IExtendedEntityProperties data outside of the player when the player dies, and retrieve it when the player respawns. I knew this, but I never would have thought of where to store it without Mithion's assistance. Though I guess it could be stored anywhere that persists...
+We need to find a way to store the IExtendedEntityProperties data outside of the player when the player dies, and
+retrieve it when the player respawns. I knew this, but I never would have thought of where to store it without
+Mithion's assistance. Though I guess it could be stored anywhere that persists...
 
 Also thanks to Seigneur_Necron for some excellent pointers on good coding practice. This helped clean
 
 up aspects of the code and improve the overall quality. Merci!
 
-Enough blabbing. The most convenient way to store extended properties is bundled as NBT, and we'll be storing it in a HashMap with the player's username as the key. We'll store this map in our CommonProxy class.
+Enough blabbing. The most convenient way to store extended properties is bundled as NBT, and we'll be storing it in a
+HashMap with the player's username as the key. We'll store this map in our CommonProxy class.
 */
 public class CommonProxy implements IGuiHandler
 {
