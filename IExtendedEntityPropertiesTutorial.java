@@ -79,6 +79,24 @@ public class ExtendedPlayer implements IExtendedEntityProperties
 		this.currentMana = this.maxMana = 50;
 	}
 	
+	/**
+	 * Used to register these extended properties for the player during EntityConstructing event
+	 * This method is for convenience only; it will make your code look nicer
+	 */
+	public static final void register(EntityPlayer player)
+	{
+		player.registerExtendedProperties(ExtendedPlayer.EXT_PROP_NAME, new ExtendedPlayer(player));
+	}
+	
+	/**
+	 * Returns ExtendedPlayer properties for player
+	 * This method is for convenience only; it will make your code look nicer
+	 */
+	public static final ExtendedPlayer get(EntityPlayer player)
+	{
+		return (ExtendedPlayer) player.getExtendedProperties(EXT_PROP_NAME);
+	}
+	
 	// Save any custom data that needs saving here
 	@Override
 	public void saveNBTData(NBTTagCompound compound)
@@ -171,20 +189,16 @@ public class TutEventHandler
 		The null check may not be necessary - I only use it to make sure
 		properties are only registered once per entity
 		*/
-		if (event.entity instanceof EntityPlayer &&
-				event.entity.getExtendedProperties(ExtendedPlayer.EXT_PROP_NAME) == null)
-		{
-			/*
-			Note that the constant EXT_PROP_NAME is used all over the place
-			Each time you use it is one less chance you have to make a typo
-			and one less instance to change if you ever change the name :)
-			*/
-			// This is how extended properties are registered:
-			event.entity.registerExtendedProperties(ExtendedPlayer.EXT_PROP_NAME,
-					new ExtendedPlayer((EntityPlayer) event.entity));
+		if (event.entity instanceof EntityPlayer && ExtendedPlayer.get((EntityPlayer) event.entity) == null)
+			// This is how extended properties are registered using our convenient method from earlier
+			ExtendedPlayer.register((EntityPlayer) event.entity);
 			// That will call the constructor as well as cause the init() method
 			// to be called automatically
-		}
+		
+		// If you didn't make the two convenient methods from earlier, your code would be
+		// much uglier:
+		if (event.entity instanceof EntityPlayer && event.entity.getExtendedProperties(ExtendedPlayer.EXT_PROP_NAME) == null)
+			event.entity.registerExtendedProperties(ExtendedPlayer.EXT_PROP_NAME, new ExtendedPlayer((EntityPlayer) event.entity));
 	}
 }
 /*
@@ -218,8 +232,13 @@ public class ItemUseMana extends Item
 			
 			Also, getExtendedProperties("name") returns the type 'IExtendedEntityProperties', so
 			you need to cast it as your extended properties type for it to work.
-			 */
+			
+			Old, ugly method:
 			ExtendedPlayer props = (ExtendedPlayer) player.getExtendedProperties(ExtendedPlayer.EXT_PROP_NAME);
+			
+			This is using Seigneur_Necron's slick method (will be used from here on):
+			 */
+			ExtendedPlayer props = ExtendedPlayer.get(player);
 			
 			// Here we'll use the method we made to see if the player has enough mana to do something
 			// We'll print something to the console for debugging, but I'm sure you'll find a much
@@ -269,7 +288,7 @@ public void onLivingFallEvent(LivingFallEvent event)
 	// so check if it's the right kind of entity first
 	if (event.entity instanceof EntityPlayer)
 	{
-		ExtendedPlayer props = (ExtendedPlayer) event.entity.getExtendedProperties(ExtendedPlayer.EXT_PROP_NAME);
+		ExtendedPlayer props = ExtendedPlayer.get((EntityPlayer) event.entity);
 		
 		// This 'if' statement just saves a little processing time and
 		// makes it so we only deplete mana from a fall that would injure the player
@@ -359,7 +378,7 @@ public class GuiManaBar extends Gui
 		/** Start of my tutorial */
 		
 		// Get our extended player properties and assign it locally so we can easily access it
-		ExtendedPlayer props = (ExtendedPlayer) this.mc.thePlayer.getExtendedProperties(ExtendedPlayer.EXT_PROP_NAME);
+		ExtendedPlayer props = ExtendedPlayer.get(this.mc.thePlayer);
 		
 		// If for some reason these properties don't exist (perhaps in multiplayer?)
 		// or the player doesn't have mana, return. Note that I added a new method
@@ -460,7 +479,7 @@ public class TutorialPacketHandler implements IPacketHandler
 	{
 		DataInputStream inputStream = new DataInputStream(new ByteArrayInputStream(packet.data));
 		
-		ExtendedPlayer props = ((ExtendedPlayer)((EntityPlayer) player).getExtendedProperties(ExtendedPlayer.EXT_PROP_NAME));
+		ExtendedPlayer props = ExtendedPlayer.get((EntityPlayer) player);
 
 		// Everything we read here should match EXACTLY the order in which we wrote it
 		// to the output stream in our ExtendedPlayer sync() method.
@@ -488,7 +507,7 @@ in all of my IExtendedEntityProperties classes, just to make it easy on myself.
  * Sends a packet to the client containing information stored on the server
  * for ExtendedPlayer
  */
-public final void syncExtendedProperties()
+public final void sync()
 {
 	ByteArrayOutputStream bos = new ByteArrayOutputStream(8);
 	DataOutputStream outputStream = new DataOutputStream(bos);
@@ -502,15 +521,10 @@ public final void syncExtendedProperties()
 		ex.printStackTrace();
 	}
 
-	Packet250CustomPayload packet = new Packet250CustomPayload();
-	packet.channel = "tutchannel";
-	packet.data = bos.toByteArray();
-	packet.length = bos.size();
-
-	Side side = FMLCommonHandler.instance().getEffectiveSide();
+	Packet250CustomPayload packet = new Packet250CustomPayload("tutchannel", bos.toByteArray);
 	
 	// We only want to send from the server to the client
-	if (side == Side.SERVER) {
+	if (FMLCommonHandler.instance().getEffectiveSide() == Side.SERVER) {
 		EntityPlayerMP player1 = (EntityPlayerMP) player;
 		PacketDispatcher.sendPacketToPlayer(packet, (Player) player1);
 	}
@@ -529,7 +543,7 @@ Here you can see my implementations for setCurrentMana and setMaxMana:
 public void setCurrentMana(int amount)
 {
 	this.currentMana = (amount < this.maxMana ? amount : this.maxMana);
-	this.syncExtendedProperties();
+	this.sync();
 }
 
 /**
@@ -538,7 +552,7 @@ public void setCurrentMana(int amount)
 public void setMaxMana(int amount)
 {
 	this.maxMana = (amount > 0 ? amount : 0);
-	this.syncExtendedProperties();
+	this.sync();
 }
 /*
 Note that we add a call to syncExtendedProperties() in each of these methods because they
@@ -560,7 +574,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event)
 	//Only need to synchronize when the world is remote (i.e. we're on the server side)
 	// and only for player entities, as that's what we need for the GuiManaBar
 	if (!event.entity.worldObj.isRemote && event.entity instanceof EntityPlayer) {
-		((ExtendedPlayer)(event.entity.getExtendedProperties(ExtendedPlayer.EXT_PROP_NAME))).syncExtendedProperties();
+		ExtendedPlayer.get((EntityPlayer) event.entity).sync();
 	}
 }
 /*
@@ -575,22 +589,40 @@ Now we're going to add a variable to all EntityLivingBase entities in addition
 to the ones we added above for EntityPlayer. We only want players to have mana,
 but we want every creature under the sun to have riches for us to plunder!
 
-Well, guess what it will be named? That's right, ExtendedLivingBase! this
-class, as it will be almost exactly like the one we just made, but with one difference:
+Well, guess what it will be named? That's right, ExtendedLiving! this class, as
+it will be almost exactly like the one we just made, but with one difference:
 we're going to use the init() method so we can use the Random from World object to
 randomize the amount of gold each entitylivingbase has.
 */
-public class ExtendedLivingBase implements IExtendedEntityProperties
+public class ExtendedLiving implements IExtendedEntityProperties
 {
-	public final static String EXT_PROP_NAME = "ExtendedLivingBase";
+	public final static String EXT_PROP_NAME = "ExtendedLiving";
 	
 	private final EntityLivingBase entity;
 	
 	private int gold;
 
-	public ExtendedLivingBase(EntityLivingBase entity)
+	public ExtendedLiving(EntityLivingBase entity)
 	{
 		this.entity = entity;
+	}
+	
+	/**
+	 * Used to register these extended properties for the entity during EntityConstructing event
+	 * This method is for convenience only; it will make your code look nicer
+	 */
+	public static final void register(EntityLivingBase entity)
+	{
+		entity.registerExtendedProperties(ExtendedLiving.EXT_PROP_NAME, new ExtendedLiving(entity));
+	}
+	
+	/**
+	 * Returns ExtendedLiving properties for entity
+	 * This method is for convenience only; it will make your code look nicer
+	 */
+	public static final ExtendedLiving get(EntityLivingBase entity)
+	{
+		return (ExtendedLiving) entity.getExtendedProperties(EXT_PROP_NAME);
 	}
 
 	@Override
@@ -620,11 +652,9 @@ public class ExtendedLivingBase implements IExtendedEntityProperties
 public void onEntityConstructing(EntityConstructing event)
 {
 	// From last time:
-	if (event.entity instanceof EntityPlayer &&
-			event.entity.getExtendedProperties(ExtendedPlayer.EXT_PROP_NAME) == null)
+	if (event.entity instanceof EntityPlayer && ExtendedPlayer.get((EntityPlayer) event.entity) == null)
 	{
-		event.entity.registerExtendedProperties(ExtendedPlayer.EXT_PROP_NAME,
-				new ExtendedPlayer((EntityPlayer) event.entity));
+		ExtendedPlayer.register((EntityPlayer) event.entity);
 	}
 	/* New stuff:
 	Be sure not to use 'else if' here. A player, for example, is both an EntityPlayer
@@ -639,8 +669,12 @@ public void onEntityConstructing(EntityConstructing event)
 		of our IExtendedEntityProperty classes? So easy to remember and it
 		stores a different name for each class. Nice.
 		*/
+		ExtendedLiving.register((EntityLivingBase) event.entity);
+		
+		/* Old, cumbersome method:
 		event.entity.registerExtendedProperties(ExtendedLivingBase.EXT_PROP_NAME,
 				new ExtendedLivingBase((EntityLivingBase) event.entity));
+		*/
 		// Remember, this will also call the init() method automatically
 	}
 }
@@ -660,7 +694,7 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event)
 {
 	if (event.entity instanceof EntityLivingBase)
 	{
-		ExtendedLivingBase props = (ExtendedLivingBase) event.entity.getExtendedProperties(ExtendedLivingBase.EXT_PROP_NAME);
+		ExtendedLiving props = ExtendedLiving.get((EntityLivingBase) event.entity);
 		// Gives a random amount of gold between 0 and 15
 		props.addGold(event.entity.worldObj.rand.nextInt(16));
 		System.out.println("[LIVING BASE] Gold: " + props.getGold());
@@ -755,7 +789,7 @@ public void onLivingDeathEvent(LivingDeathEvent event)
 		// create a new NBT Tag Compound to store the IExtendedEntityProperties data
 		NBTTagCompound playerData = new NBTTagCompound();
 		// write the data to the new compound
-		((ExtendedPlayer)(event.entity.getExtendedProperties(ExtendedPlayer.EXT_PROP_NAME))).saveNBTData(playerData);
+		ExtendedPlayer.get((EntityPlayer) event.entity).saveNBTData(playerData);
 		// and store it in our proxy
 		proxy.storeEntityData(((EntityPlayer) event.entity).username, playerData);
 	}
@@ -776,10 +810,10 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event)
 		if (playerData != null)
 		{
 			// then load the data back into the player's IExtendedEntityProperties
-			((ExtendedPlayer)(event.entity.getExtendedProperties(ExtendedPlayer.EXT_PROP_NAME))).loadNBTData(playerData);
+			ExtendedPlayer.get((EntityPlayer) event.entity).loadNBTData(playerData);
 		}
 		// finally, we sync the data between server and client (we did this earlier in 3.3)
-		((ExtendedPlayer)(event.entity.getExtendedProperties(ExtendedPlayer.EXT_PROP_NAME))).syncExtendedProperties();
+		ExtendedPlayer.get((EntityPlayer) event.entity).sync();
 	}
 }
 /*
