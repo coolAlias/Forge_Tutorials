@@ -73,21 +73,21 @@ ItemThrowingRock class:
 /**
  * Called whenever this item is equipped and the right mouse button is pressed. Args: itemStack, world, entityPlayer
  */
-public ItemStack onItemRightClick(ItemStack par1ItemStack, World par2World, EntityPlayer par3EntityPlayer)
+public ItemStack onItemRightClick(ItemStack itemstack, World world, EntityPlayer player)
 {
-	if (!par3EntityPlayer.capabilities.isCreativeMode)
+	if (!player.capabilities.isCreativeMode)
 	{
-		--par1ItemStack.stackSize;
+		--itemstack.stackSize;
 	}
 
-	par2World.playSoundAtEntity(par3EntityPlayer, "random.bow", 0.5F, 0.4F / (itemRand.nextFloat() * 0.4F + 0.8F));
+	world.playSoundAtEntity(player, "random.bow", 0.5F, 0.4F / (itemRand.nextFloat() * 0.4F + 0.8F));
 
-	if (!par2World.isRemote)
+	if (!world.isRemote)
 	{
-		par2World.spawnEntityInWorld(new EntitySnowball(par2World, par3EntityPlayer));
+		world.spawnEntityInWorld(new EntitySnowball(world, player));
 	}
 
-	return par1ItemStack;
+	return itemstack;
 }
 /*
 Ok, run the code and you'll see your ThrowingRocks spawn snowballs. That's not what
