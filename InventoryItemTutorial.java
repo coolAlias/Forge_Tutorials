@@ -864,8 +864,16 @@ public class ItemStore extends Item
 			// Cast Entity parameter as an EntityPlayer
 			EntityPlayer player = (EntityPlayer) entity;
 
-			// Check if the player is not in a menu, if key 'I' is pressed and
-			// the player is currently holding the correct type of item (an ItemInventory)
+			/*
+			Check if the player is not in a menu, if key 'I' is pressed and the player is currently
+			holding the correct type of item (an ItemInventory).
+			
+			NOTE: Using 'Keyboard' works for single player but WILL crash on a multi-player server. To make
+			your item multi-player-compatible, you will need to set up a custom KeyBinding and KeyHandler.
+			See SoBiohazardous' tutorial at http://www.minecraftforum.net/topic/1798625-162sobiohazardouss-forge-keybinding-tutorial/ 
+			as well as my post there http://www.minecraftforum.net/topic/1798625-162sobiohazardouss-forge-keybinding-tutorial/page__st__60#entry24320776
+			for some more advanced stuff.
+			*/
 			if (FMLClientHandler.instance().getClient().inGameHasFocus
 					&& Keyboard.isKeyDown(Keyboard.KEY_I) &&
 					player.getHeldItem() != null && player.getHeldItem().getItem() instanceof ItemStore)
