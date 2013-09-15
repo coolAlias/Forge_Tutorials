@@ -223,7 +223,7 @@ public class ItemUseMana extends Item
 	
 	@Override
 	public ItemStack onItemRightClick(ItemStack itemstack, World world, EntityPlayer player)
-    {
+    	{
 		if (!world.isRemote)
 		{
 			/*
@@ -555,7 +555,7 @@ public void setMaxMana(int amount)
 	this.sync();
 }
 /*
-Note that we add a call to syncExtendedProperties() in each of these methods because they
+Note that we add a call to sync() our ExtendedProperties in each of these methods because they
 changed our stored variables. We also need to sync the properties in any other methods that
 do so, like consumeMana and replenishMana.
 
@@ -573,9 +573,8 @@ public void onEntityJoinWorld(EntityJoinWorldEvent event)
 {
 	//Only need to synchronize when the world is remote (i.e. we're on the server side)
 	// and only for player entities, as that's what we need for the GuiManaBar
-	if (!event.entity.worldObj.isRemote && event.entity instanceof EntityPlayer) {
+	if (!event.entity.worldObj.isRemote && event.entity instanceof EntityPlayer)
 		ExtendedPlayer.get((EntityPlayer) event.entity).sync();
-	}
 }
 /*
 Anyways, that's a lot of work just to get a little mana bar, but it should all be working
@@ -653,15 +652,12 @@ public void onEntityConstructing(EntityConstructing event)
 {
 	// From last time:
 	if (event.entity instanceof EntityPlayer && ExtendedPlayer.get((EntityPlayer) event.entity) == null)
-	{
 		ExtendedPlayer.register((EntityPlayer) event.entity);
-	}
 	/* New stuff:
 	Be sure not to use 'else if' here. A player, for example, is both an EntityPlayer
 	AND an EntityLivingBase, so should have both extended properties
 	*/ 
 	if (event.entity instanceof EntityLivingBase)
-	{
 		/*
 		Just like above but we change 'ExtendedPlayer' to 'ExtendedLivingBase'
 		and cast event.entity to EntityLivingBase.
@@ -676,7 +672,6 @@ public void onEntityConstructing(EntityConstructing event)
 				new ExtendedLivingBase((EntityLivingBase) event.entity));
 		*/
 		// Remember, this will also call the init() method automatically
-	}
 }
 /*
 Finished! Go ahead and give it a try, see how much gold everyone is getting!
