@@ -6,10 +6,15 @@
 I'm back with a new tutorial on how to create an Item that can store an Inventory,
 such as a backpack. This time I've commented pretty thoroughly within the code itself,
 so I'll let it do most of the talking.
+
 I've included everything you'll need to get it working, so there are no prerequisites
 to this tutorial, though it's best if you at least know how to set up a mod.
+
 If you know how to make a custom Item or have experience with TileEntity Gui's, then
 you probably won't have any trouble with this.
+
+I do highly suggest reading the tutorial on Item NBT, however, as it will greatly aid
+in understanding what's to come. Find it here: http://www.minecraftforge.net/wiki/Item_nbt
 
 IMPORTANT NOTE: Adding new data to an item's NBT may require your mod to be installed
 server-side because the server handles initializing, maintaining, loading and saving
