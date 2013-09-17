@@ -13,10 +13,14 @@ Here's how to make one:
 */
 
 /**
- * Step 1: Create EventHandler class
+ * Step 1: Create TutEventHandler class
  */
+/*
+IMPORTANT!!! Do NOT name your EventHandler 'EventHandler' - that's already the name of a Forge class.
+Also, do NOT edit any of the Forge classes. You need to create a new class to handle events.
+*/
 
-public class EventHandler
+public class TutEventHandler
 {
 }
 
@@ -28,7 +32,7 @@ public class EventHandler
 @EventHandler
 public void load(FMLInitializationEvent event)
 {
-	MinecraftForge.EVENT_BUS.register(new EventHandler());
+	MinecraftForge.EVENT_BUS.register(new TutEventHandler());
 }
 
 // You're finished! That was easy  But it doesn't do anything right now,
@@ -36,10 +40,10 @@ public void load(FMLInitializationEvent event)
 
 /**
  * Step 3: Look through MinecraftForge event types for ones you want to use
- * and add them to your EventHandler
+ * and add them to your TutEventHandler
  */
 
-// In your EventHandler class - the name of the method doesn't matter
+// In your TutEventHandler class - the name of the method doesn't matter
 // Only the Event type parameter is what's important (see below for explanations of some types)
 @ForgeSubscribe
 public void onLivingUpdateEvent(LivingUpdateEvent event)
@@ -110,7 +114,7 @@ public void onPlayerStoppedUsing(ItemStack itemstack, World world, EntityPlayer 
 }
 
 /**
- * Step 5: Adding events to your EventHandler
+ * Step 5: Adding events to your TutEventHandler
  */
 /* A template for whatever event method you want to make. Name it whatever you want,
    but use the correct Event Type from above. Event variables are accessed by using 
