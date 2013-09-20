@@ -257,14 +257,21 @@ that doesn't use an Item Icon, you will need to use this to get your custom text
 
 ResourceLocation takes 2 parameters: ModId and the path to your texture at the location:
 "src/minecraft/assets/modid/"
+
+You can also set it with a single parameter, the string of the path to the texture:
+"mymodid:textures/entity/mytexture.png" or (mymodid + ":textures/entity/mytexture.png").
 */
 ResourceLocation iconLocation = new ResourceLocation("yourmodname", "textures/entity/yourtexture.png");
 
 // For Tile Entity Special Renders, the resource location is 'bound' using this code:
-this.func_110628_a(iconLocation);
+// this.func_110628_a(iconLocation); // Forge 804
+// now (Forge 871) uses bindTexture:
+this.bindTexture(iconLocation);
 
 // For Gui's, the resource location is 'bound' using this code:
-this.mc.func_110434_K().func_110577_a(iconLocation);
+// this.mc.func_110434_K().func_110577_a(iconLocation); // Forge 804
+// As of Forge 871 at the latest, you can use renderEngine and bindTexture:
+this.mc.renderEngine.bindTexture(iconLocation)
 
 /**
  * Step 4: Creating a custom Render, e.g. RenderThrowingRock
@@ -303,7 +310,10 @@ public class RenderThrowingRock extends Render
 			GL11.glTranslatef((float)par2, (float)par4, (float)par6);
 			GL11.glEnable(GL12.GL_RESCALE_NORMAL);
 			GL11.glScalef(0.5F, 0.5F, 0.5F);
-			this.func_110777_b(par1Entity);
+			
+			// this.func_110777_b(par1Entity); // worked in Forge 804, but no longer; use this:
+                	 this.bindEntityTexture(par1Entity);
+
 			Tessellator tessellator = Tessellator.instance;
 
 			if (icon == ItemPotion.func_94589_d("bottle_splash"))
@@ -324,11 +334,12 @@ public class RenderThrowingRock extends Render
 			GL11.glPopMatrix();
 		}
 	}
-
-	protected ResourceLocation func_110775_a(Entity par1Entity)
-	{
-		return TextureMap.field_110576_c;
+	
+	@Override
+	protected ResourceLocation getEntityTexture(Entity entity) {
+        	return TextureMap.locationItemsTexture;
 	}
+
 
 	private void func_77026_a(Tessellator par1Tessellator, Icon par2Icon)
 	{
