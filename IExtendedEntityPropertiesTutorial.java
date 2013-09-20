@@ -412,7 +412,7 @@ public class GuiManaBar extends Gui
 		// Somewhere in Minecraft vanilla code it says to do this because of a lighting bug
 		GL11.glDisable(GL11.GL_LIGHTING);
 		
-		// This magic formula here binds the texture to the renderer
+		// Bind your texture to the render engine
 		this.mc.renderEngine.bindTexture(texturepath);
 		
 		/*
