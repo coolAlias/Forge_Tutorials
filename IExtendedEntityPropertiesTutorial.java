@@ -20,6 +20,12 @@ Prerequisites:
 1. Know how to set up and use Forge Events. See my tutorial on creating an EventHandler.
 2. Willingness to read carefully.
 
+NOTES: Updating from Forge 804 to 871
+Three things you'll need to change in your GUI files:
+1. I18n.func_135053_a() is now I18n.getString()
+2. mc.func_110434_K() is now mc.renderEngine
+3. renderEngine.func_110577_a() is now renderEngine.bindTexture()
+
 IMPORTANT NOTE: Using IExtendedEntityProperties adds new data to entities, and the server handles initializing,
 maintaining, loading and saving of all data. For multi-player compatibility outside of the Eclipse server environment,
 you must require your mod to be installed server-side for the data to exist. This means your @NetworkMod line will
@@ -407,7 +413,7 @@ public class GuiManaBar extends Gui
 		GL11.glDisable(GL11.GL_LIGHTING);
 		
 		// This magic formula here binds the texture to the renderer
-		this.mc.func_110434_K().func_110577_a(texturepath);
+		this.mc.renderEngine.bindTexture(texturepath);
 		
 		/*
 		The parameters for drawTexturedModalRect are as follows:
