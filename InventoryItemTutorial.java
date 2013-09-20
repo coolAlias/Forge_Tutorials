@@ -31,6 +31,12 @@ Finally, using Keyboard will crash the server, so you need to set up a custom Ke
 A key binding tutorial can be found here:
 http://www.minecraftforum.net/topic/1798625-162sobiohazardouss-forge-keybinding-tutorial/
 
+NOTES on Updating from Forge 804 to 871:
+Three things you'll need to change in your GUI files:
+1. I18n.func_135053_a() in now I18n.getString()
+2. mc.func_110434_K() is now mc.renderEngine
+3. renderEngine.func_110577_a() is now renderEngine.bindTexture()
+
 Now on to the tutorial!
 */
 
@@ -763,9 +769,9 @@ public class GuiItemInventory extends GuiContainer
 	 */
 	protected void drawGuiContainerForegroundLayer(int par1, int par2)
 	{
-		String s = this.inventory.isInvNameLocalized() ? this.inventory.getInvName() : I18n.func_135053_a(this.inventory.getInvName());
+		String s = this.inventory.isInvNameLocalized() ? this.inventory.getInvName() : I18n.getString(this.inventory.getInvName());
 		this.fontRenderer.drawString(s, this.xSize / 2 - this.fontRenderer.getStringWidth(s) / 2, 0, 4210752);
-		this.fontRenderer.drawString(I18n.func_135053_a("container.inventory"), 26, this.ySize - 96 + 4, 4210752);
+		this.fontRenderer.drawString(I18n.getString("container.inventory"), 26, this.ySize - 96 + 4, 4210752);
 	}
 
 	/**
@@ -774,7 +780,7 @@ public class GuiItemInventory extends GuiContainer
 	protected void drawGuiContainerBackgroundLayer(float par1, int par2, int par3)
 	{
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-		this.mc.func_110434_K().func_110577_a(iconLocation);
+		this.mc.renderEngine.bindTexture(iconLocation);
 		int k = (this.width - this.xSize) / 2;
 		int l = (this.height - this.ySize) / 2;
 		this.drawTexturedModalRect(k, l, 0, 0, this.xSize, this.ySize);
