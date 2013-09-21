@@ -495,7 +495,7 @@ public class ContainerItem extends Container
 			if (par2 < INV_START)
 			{
 				// try to place in player inventory / action bar
-				if (!this.mergeItemStack(itemstack1, INV_START, HOTBAR_END + 1, true))
+				if (!this.mergeItemStack(itemstack1, INV_START, HOTBAR_END+1, true))
 				{
 					return null;
 				}
@@ -537,15 +537,15 @@ public class ContainerItem extends Container
 				if (par2 >= INV_START && par2 < HOTBAR_START)
 				{
 					// place in action bar
-					if (!this.mergeItemStack(itemstack1, HOTBAR_START, HOTBAR_END + 1, false))
+					if (!this.mergeItemStack(itemstack1, HOTBAR_START, HOTBAR_END+1, false))
 					{
 						return null;
 					}
 				}
 				// item in action bar - place in player inventory
-				else if (par2 >= HOTBAR_START && par2 < HOTBAR_END + 1)
+				else if (par2 >= HOTBAR_START && par2 < HOTBAR_END+1)
 				{
-					if (!this.mergeItemStack(itemstack1, INV_START, INV_END + 1, false))
+					if (!this.mergeItemStack(itemstack1, INV_START, INV_END+1, false))
 					{
 						return null;
 					}
