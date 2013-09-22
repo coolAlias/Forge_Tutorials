@@ -945,6 +945,60 @@ public class ItemStore extends Item
 		this.itemIcon = iconRegister.registerIcon("inventoryitemmod:" + this.getUnlocalizedName().substring(5));
 	}
 }
+/**
+ * Step 6: Saving Inventory Contents without onUpdate Method
+ */
 /*
+This is a way to save the inventory contents without using onUpdate, directly from the Inventory class.
+This should allow you to do other things with your inventory when a Gui is not open, such as add or remove items
+directly to it, bypassing the Gui altogether. It still works with a Gui, of course.
+*/
+// Add a variable to store the parent ItemStack:
+private final ItemStack stack;
+
+// Initialize it in the Constructor:
+public InventoryMagicBag(ItemStack itemstack)
+{
+	stack = itemstack;
+
+	// Be sure to create NBT Tags when needed:
+	if (!itemstack.hasTagCompound()) {
+		itemstack.setTagCompound(new NBTTagCompound());
+	}
+	if (!stack.hasTagCompound()) {
+		stack.setTagCompound(new NBTTagCompound());
+	}
+
+	readFromNBT(itemstack.getTagCompound());
+	readFromNBT(stack.getTagCompound());
+}
+
+// then just add this one line to the end of onInventoryChanged():
+this.writeToNBT(this.stack.getTagCompound());
+
+// NOTE: You can now remove the onUpdate method
+
+/*
+This is, in my opinion, a much better way of saving the inventory contents, as you don't need to use the onUpdate
+method which will save some processing time. Now you can remove entirely the 'onUpdate' method from your Item and
+the 'needsUpdate' variable in your Container.
+
+To see what is now possible, add this code to your Item's onItemRightClick:
+*/
+@Override
+public ItemStack onItemRightClick(ItemStack itemstack, World world, EntityPlayer player)
+{
+	if (!world.isRemote)
+	{
+		if (!player.isSneaking())
+			player.openGui(InventoryItemMain.instance, InventoryItemMain.ItemInventoryGuiIndex, world, (int) player.posX, (int) player.posY, (int) player.posZ);
+		else
+			new InventoryItem(player.getHeldItem()).setInventorySlotContents(0, new ItemStack(Item.diamond,4));
+	}
+	return itemstack;
+}
+/*
+Hooray, diamonds for sneaking with no Gui!
+
 And that's it!
 */
