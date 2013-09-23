@@ -456,7 +456,6 @@ public class ContainerItem extends Container
 
 	/**
 	 * Called when a player shift-clicks on a slot. You must override this or you will crash when someone does that.
-	 * Only real change we make to this is to set needsUpdate to true at the end
 	 */
 	public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int par2)
 	{
