@@ -16,18 +16,8 @@ you probably won't have any trouble with this.
 I do highly suggest reading the tutorial on Item NBT, however, as it will greatly aid
 in understanding what's to come. Find it here: http://www.minecraftforge.net/wiki/Item_nbt
 
-IMPORTANT NOTE: Adding new data to an item's NBT may require your mod to be installed
-server-side because the server handles initializing, maintaining, loading and saving
-of all data. So if your inventory-storing item works great in single player but doesn't
-save items in multi-player, you should try requiring your mod server side and see if it
-works then. This means your @NetworkMod line will look like this:
-
-@NetworkMod(clientSideRequired=true, serverSideRequired=true, // packetHandler stuff)
-
-For inventories and itemstacks, the correct information is usually requested automatically by
-the client, so you shouldn't have to worry about packets in most scenarios.
-
-Finally, using Keyboard will crash the server, so you need to set up a custom KeyHandler class.
+NOTE: Using 'Keyboard' will crash the server, so you need to set up a custom KeyHandler class
+if you plan on using your Item / Inventory in multiplayer. I won't cover that in this tutorial.
 A key binding tutorial can be found here:
 http://www.minecraftforum.net/topic/1798625-162sobiohazardouss-forge-keybinding-tutorial/
 
@@ -143,6 +133,9 @@ how we can save our inventory within an "Item" - by using its enclosing ItemStac
 public class InventoryItem implements IInventory
 {
 	private String name = "Inventory Item";
+	
+	/** Provides NBT Tag Compound to reference */
+	private final ItemStack stack;
 
 	/** Defining your inventory size this way is handy */
 	public static final int INV_SIZE = 8;
@@ -155,13 +148,13 @@ public class InventoryItem implements IInventory
 	 */
 	public InventoryItem(ItemStack itemstack)
 	{
-		// Just in case the itemstack doesn't yet have an NBT Tag Compound:
-		if (!itemstack.hasTagCompound())
-		{
-			itemstack.setTagCompound(new NBTTagCompound());
-		}
+		this.stack = itemstack;
+
+		// Create a new NBT Tag Compound if one doesn't already exist, or you will crash
+		if (!this.stack.hasTagCompound()) { this.stack.setTagCompound(new NBTTagCompound()); }
+
 		// Read the inventory contents from NBT
-		readFromNBT(itemstack.getTagCompound());
+		readFromNBT(this.stack.getTagCompound());
 	}
 
 	@Override
@@ -195,6 +188,7 @@ public class InventoryItem implements IInventory
 				setInventorySlotContents(slot, null);
 			}
 
+			// Don't forget this line or your inventory will not be saved!
 			this.onInventoryChanged();
 		}
 		return stack;
@@ -221,6 +215,7 @@ public class InventoryItem implements IInventory
 			itemstack.stackSize = this.getInventoryStackLimit();
 		}
 
+		// Don't forget this line or your inventory will not be saved!
 		this.onInventoryChanged();
 	}
 
@@ -242,6 +237,11 @@ public class InventoryItem implements IInventory
 		return 64;
 	}
 
+	/**
+	 * This is the method that will handle saving the inventory contents, as it is called (or should be called!)
+	 * anytime the inventory changes. Perfect. Much better than using onUpdate in an Item, as this will also
+	 * let you change things in your inventory without ever opening a Gui, if you want.
+	 */
 	@Override
 	public void onInventoryChanged()
 	{
@@ -250,6 +250,9 @@ public class InventoryItem implements IInventory
 			if (this.getStackInSlot(i) != null && this.getStackInSlot(i).stackSize == 0)
 				this.setInventorySlotContents(i, null);
 		}
+		
+		// This line here does the work:		
+		this.writeToNBT(this.stack.getTagCompound());
 	}
 
 	@Override
@@ -390,14 +393,6 @@ public class ContainerItem extends Container
 	/** The Item Inventory for this Container */
 	public final InventoryItem inventory;
 
-	/** Stores ItemStack that was used to open the container; used for saving to NBT
-	 * Without this variable, the game will crash when GUI is open and you move the
-	 * ItemStore whose inventory is currently in use */
-	private final ItemStack containerstack;
-
-	/** Set to true when contents of container have changed and need to be saved */
-	public boolean needsUpdate;
-
 	/** Using these will make transferStackInSlot easier to understand and implement
 	 * INV_START is the index of the first slot in the Player's Inventory, so our
 	 * InventoryItem's number of slots (e.g. 5 slots is array indices 0-4, so start at 5)
@@ -413,7 +408,6 @@ public class ContainerItem extends Container
 	public ContainerItem(EntityPlayer par1Player, InventoryPlayer inventoryPlayer, InventoryItem inventoryItem)
 	{
 		this.inventory = inventoryItem;
-		this.containerstack = par1Player.getHeldItem();
 
 		int i;
 
@@ -456,21 +450,6 @@ public class ContainerItem extends Container
 		}
 	}
 
-	/**
-	 * Writes contents of inventory to correct itemstack's NBT Tag Compound
-	 * This is the method we will call from our custom Item's onUpdate method
-	 */
-	public void writeToNBT()
-	{
-		// Use this.containerstack for getting compound
-		if (!this.containerstack.hasTagCompound())
-		{
-			this.containerstack.setTagCompound(new NBTTagCompound());
-		}
-		// Cast to InventoryItem so we can call the method from that class:
-		((InventoryItem) inventory).writeToNBT(this.containerstack.getTagCompound());
-	}
-
 	@Override
 	public boolean canInteractWith(EntityPlayer entityplayer)
 	{
@@ -505,8 +484,10 @@ public class ContainerItem extends Container
 			// Item is in inventory / hotbar, try to place in custom inventory or armor slots
 			else
 			{
-				/* If your inventory only stores certain instances of Items,
-				 * you can implement shift-clicking to your inventory like this:
+				/*
+				If your inventory only stores certain instances of Items,
+				you can implement shift-clicking to your inventory like this:
+				
 				// Check that the item is the right type
 				if (itemstack1.getItem() instanceof ItemCustom)
 				{
@@ -528,10 +509,26 @@ public class ContainerItem extends Container
 						return null;
 					}
 				}
-				 * Otherwise, you have basically 2 choices:
-				 * 1. shift-clicking between action bar and inventory
-				 * 2. shift-clicking between player inventory and custom inventory
-				 * I've implemented number 1:
+				Otherwise, you have basically 2 choices:
+				1. shift-clicking between player inventory and custom inventory
+				2. shift-clicking between action bar and inventory
+				 
+				Be sure to choose only ONE of the following implementations!!!
+				*/
+				/**
+				 * Implementation number 1: Shift-click into your custom inventory
+				 */
+				if (par2 >= INV_START)
+        		    	{
+            				// place in custom inventory
+        				if (!this.mergeItemStack(itemstack1, 0, INV_START, false))
+					{
+						return null;
+                			}
+            			}
+				
+				/**
+				 * Implementation number 2: Shift-click items between action bar and inventory
 				 */
 				// item is in player's inventory, but not in action bar
 				if (par2 >= INV_START && par2 < HOTBAR_START)
@@ -569,20 +566,7 @@ public class ContainerItem extends Container
 			slot.onPickupFromSlot(par1EntityPlayer, itemstack1);
 		}
 
-		// This flag tells our custom Item to call ContainerItem's writeToNBT method
-		this.needsUpdate = true;
-
 		return itemstack;
-	}
-
-	/**
-	 * We only override this so that we can tell our InventoryItem to update
-	 */
-	@Override
-	public ItemStack slotClick(int slotID, int buttonPressed, int flag, EntityPlayer player)
-	{
-		this.needsUpdate = true;
-		return super.slotClick(slotID, buttonPressed, flag, player);
 	}
 }
 
@@ -845,69 +829,11 @@ public class ItemStore extends Item
 		// ItemStacks that store an NBT Tag Compound are limited to stack size of 1
 		this.maxStackSize = 1;
 	}
-
-	/**
-	 * Called every tick while there is an ItemInventory in the player's inventory
-	 * This is the method we will use to access the GUI and also to write to NBT
-	 * when necessary
-	 */
-	@Override
-	public void onUpdate(ItemStack itemstack, World world, Entity entity, int par4, boolean isCurrentItem)
-	{
-		/*
-		Only Player's will be accessing the GUI, so check if entity is a player.
-		
-		Note that if you need your container / inventory contents updated client side
-		then remove the '!world.isRemote' statement. A case where you might want this
-		would be if your inventory has an 'active' slot, such as a currently selected
-		spell in a spellbook and you need to know which spell that while the Gui is open
-		client side so you can render something on screen. This is because NBT data is
-		stored separately client and server side, and when you open the gui, the client
-		asks for the server NBT data, but if you change it while the gui is open, only
-		the server will know about it with the code below, so the client NBT won't be
-		updated until the gui is closed and reopened. Usually, this is not a problem.
-		
-		For most inventories, we only care about the NBT stored server side and everything
-		else will update itself automatically.
-		*/
-		if (!world.isRemote && entity instanceof EntityPlayer)
-		{
-			// Cast Entity parameter as an EntityPlayer
-			EntityPlayer player = (EntityPlayer) entity;
-
-			/*
-			Check if the player is not in a menu, if key 'I' is pressed and the player is currently
-			holding the correct type of item (an ItemInventory).
-			
-			NOTE: Using 'Keyboard' works for single player but WILL crash on a multi-player server. To make
-			your item multi-player-compatible, you will need to set up a custom KeyBinding and KeyHandler.
-			See SoBiohazardous' tutorial at http://www.minecraftforum.net/topic/1798625-162sobiohazardouss-forge-keybinding-tutorial/ 
-			as well as my post there http://www.minecraftforum.net/topic/1798625-162sobiohazardouss-forge-keybinding-tutorial/page__st__60#entry24320776
-			for some more advanced stuff.
-			*/
-			if (FMLClientHandler.instance().getClient().inGameHasFocus
-					&& Keyboard.isKeyDown(Keyboard.KEY_I) &&
-					player.getHeldItem() != null && player.getHeldItem().getItem() instanceof ItemStore)
-			{
-				// Open the correct GUI for the player at player's position
-				player.openGui(InventoryItemMain.instance, InventoryItemMain.ItemInventoryGuiIndex, world, (int) player.posX, (int) player.posY, (int) player.posZ);
-			}
-
-			// If our ContainerItem is currently open, write contents to NBT when needsUpdate is true
-			if(player.openContainer != null && player.openContainer instanceof ContainerItem
-					&& ((ContainerItem) player.openContainer).needsUpdate)
-			{
-				((ContainerItem) player.openContainer).writeToNBT();
-				// Set needsUpdate back to false so we don't continually write to NBT
-				((ContainerItem) player.openContainer).needsUpdate = false;
-			}
-		}
-	}
 	
 	/*
-	NOTE: If you want to open your gui on right click and your ItemStore doesn't have a max use duration,
-	you MUST override getMaxItemUseDuration to return a value of at least 1, otherwise your stored items
-	will NOT be saved. This is an issue with the vanilla methods onItemUse and onItemRightClick.
+	NOTE: If you want to open your gui on right click and your ItemStore, you MUST override
+	getMaxItemUseDuration to return a value of at least 1, otherwise you won't be able to open
+	the Gui. That's just how it works.
 	*/
 	@Override
 	public int getMaxItemUseDuration(ItemStack itemstack)
@@ -927,16 +853,21 @@ public class ItemStore extends Item
         	return false;
     	}
     	
-    	// 2. onItemRightClick - should open even if you click in the air
+    	// 2. onItemRightClick - opens even if you click in the air, which I personally prefer
     	@Override
 	public ItemStack onItemRightClick(ItemStack itemstack, World world, EntityPlayer player)
 	{
 		if (!world.isRemote)
 		{
-			player.openGui(InventoryItemMain.instance, InventoryItemMain.ItemInventoryGuiIndex, world, (int) player.posX, (int) player.posY, (int) player.posZ);
+			// If player not sneaking, open the inventory gui
+			if (!player.isSneaking()) player.openGui(InventoryItemMain.instance, InventoryItemMain.ItemInventoryGuiIndex, world, (int) player.posX, (int) player.posY, (int) player.posZ);
+			
+			// Otherwise, stealthily place some diamonds in there for a nice surprise next time you open it up :)
+			else new InventoryItem(player.getHeldItem()).setInventorySlotContents(0, new ItemStack(Item.diamond,4));
 		}
-        	return itemstack;
-    	}
+		
+		return itemstack;
+	}
 
 	@Override
 	@SideOnly(Side.CLIENT)
@@ -945,60 +876,6 @@ public class ItemStore extends Item
 		this.itemIcon = iconRegister.registerIcon("inventoryitemmod:" + this.getUnlocalizedName().substring(5));
 	}
 }
-/**
- * Step 6: Saving Inventory Contents without onUpdate Method
- */
 /*
-This is a way to save the inventory contents without using onUpdate, directly from the Inventory class.
-This should allow you to do other things with your inventory when a Gui is not open, such as add or remove items
-directly to it, bypassing the Gui altogether. It still works with a Gui, of course.
-*/
-// Add a variable to store the parent ItemStack:
-private final ItemStack stack;
-
-// Initialize it in the Constructor:
-public InventoryMagicBag(ItemStack itemstack)
-{
-	stack = itemstack;
-
-	// Be sure to create NBT Tags when needed:
-	if (!itemstack.hasTagCompound()) {
-		itemstack.setTagCompound(new NBTTagCompound());
-	}
-	if (!stack.hasTagCompound()) {
-		stack.setTagCompound(new NBTTagCompound());
-	}
-
-	readFromNBT(itemstack.getTagCompound());
-	readFromNBT(stack.getTagCompound());
-}
-
-// then just add this one line to the end of onInventoryChanged():
-this.writeToNBT(this.stack.getTagCompound());
-
-// NOTE: You can now remove the onUpdate method
-
-/*
-This is, in my opinion, a much better way of saving the inventory contents, as you don't need to use the onUpdate
-method which will save some processing time. Now you can remove entirely the 'onUpdate' method from your Item and
-the 'needsUpdate' variable in your Container.
-
-To see what is now possible, add this code to your Item's onItemRightClick:
-*/
-@Override
-public ItemStack onItemRightClick(ItemStack itemstack, World world, EntityPlayer player)
-{
-	if (!world.isRemote)
-	{
-		if (!player.isSneaking())
-			player.openGui(InventoryItemMain.instance, InventoryItemMain.ItemInventoryGuiIndex, world, (int) player.posX, (int) player.posY, (int) player.posZ);
-		else
-			new InventoryItem(player.getHeldItem()).setInventorySlotContents(0, new ItemStack(Item.diamond,4));
-	}
-	return itemstack;
-}
-/*
-Hooray, diamonds for sneaking with no Gui!
-
 And that's it!
 */
