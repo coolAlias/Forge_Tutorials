@@ -16,9 +16,7 @@ you probably won't have any trouble with this.
 I do highly suggest reading the tutorial on Item NBT, however, as it will greatly aid
 in understanding what's to come. Find it here: http://www.minecraftforge.net/wiki/Item_nbt
 
-NOTE: Using 'Keyboard' will crash the server, so you need to set up a custom KeyHandler class
-if you plan on using your Item / Inventory in multiplayer. I won't cover that in this tutorial.
-A key binding tutorial can be found here:
+NOTE: If you want to open your inventory with the keyboard, check out this tutorial on key binding:
 http://www.minecraftforum.net/topic/1798625-162sobiohazardouss-forge-keybinding-tutorial/
 
 NOTES on Updating from Forge 804 to 871:
