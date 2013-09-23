@@ -587,6 +587,101 @@ Anyways, that's a lot of work just to get a little mana bar, but it should all b
 correctly now. Fire it up and try for yourself!
 */
 /**
+ * Step 3.4: Using DataWatcher to Synchronize
+ */
+/*
+[SPOILER]
+Minecraft has a built-in functionality specifically to keep certain kinds of variables synchronized between server
+and client that is highly suited to our needs. It's called 'DataWatcher'. Please head over to the Minecraft Forge
+Wiki and read this tutorial first, then come back.
+
+Okay, simple enough. DataWatcher is best used for things that are constantly fluctuating, such as health, hunger, or,
+in our case, current mana. Using DataWatcher instead of packets has the advantage of... we don't have to use packets!
+But only for the variable we watch. Everything else will still need to use packets, but now we can send packets much
+less frequently.
+
+To use DataWatcher, first we need to add a new watchable object to the player. We can do this in the constructor of
+our ExtendedPlayer properties. First, I will define the index to use, in case we need to change it later due to
+unforseen conflicts with other DataWatcher objects (if you read the earlier tutorial, you'll know there are only 32
+available slots, so this is an important step to save yourself hassle later).
+*/
+/** This will be the index of our watchable object in DataWatcher */
+public static final int MANA_WATCHER = 20;
+
+public ExtendedPlayer(EntityPlayer player)
+{
+	this.player = player;
+	this.maxMana = 50;
+
+	// This adds the new object at our defined index and sets the value to max mana,
+	// since we should have full mana when first constructing
+	this.player.getDataWatcher().addObject(MANA_WATCHER, this.maxMana);
+}
+/*
+
+Notice that we no longer set the variable 'currentMana'? That's because it is now stored in DataWatcher, so we no
+longer need it. Delete that variable from the class. Errors will show up - these are all the places we need to change.
+
+First we'll fix NBT saving and loading.
+*/
+// To save, we simply replace 'currentMana' with getWatchableObjectInt
+properties.setInteger("CurrentMana", this.player.getDataWatcher().getWatchableObjectInt(MANA_WATCHER));
+
+// To load, we need to use 'updateObject' NOT 'addObject', as the object is already added.
+// If you try to add it again, you will get an error
+this.player.getDataWatcher().updateObject(MANA_WATCHER, properties.getInteger("CurrentMana"));
+
+// Next we need to fix all the methods that deal with changing currentMana:
+
+// This method gets a little messier, unfortunately, due to the unwieldy length of getting information
+// from DataWatcher vs. referencing a local variable, so we'll create a local variable instead
+public final boolean consumeMana(int amount)
+{
+	// This variable makes it easier to write the rest of the method
+	int mana = this.player.getDataWatcher().getWatchableObjectInt(MANA_WATCHER);
+
+	// These two lines are the same as before
+	boolean sufficient = amount <= mana;
+	mana -= (amount < mana ? amount : mana);
+
+	// Update the data watcher object with the new value
+	this.player.getDataWatcher().updateObject(MANA_WATCHER, mana);
+
+	// note that we no longer need to call 'sync()' to update the client
+
+	return sufficient;
+}
+
+// This method cleans up nicely - no more call to 'sync()' means no custom packet to handle!
+public final void replenishMana()
+{
+this.player.getDataWatcher().updateObject(MANA_WATCHER, this.maxMana);
+}
+
+// Simple change
+public final int getCurrentMana()
+{
+return this.player.getDataWatcher().getWatchableObjectInt(MANA_WATCHER);
+}
+
+// Again, use 'updateObject'; we don't need to 'sync()' here anymore
+public final void setCurrentMana(int amount)
+{
+this.player.getDataWatcher().updateObject(MANA_WATCHER, (amount < this.maxMana ? amount : this.maxMana));
+}
+/*
+Now remove 'currentMana' from your sync() method and packet handler, but keep in mind you still need to synchronize
+'maxMana' with a packet, so you'll need to keep the sync() method. Note that the packet size will now be '4' if you've
+followed along exactly.
+
+Why not use DataWatcher for maxMana too? Well you could, but since it rarely changes, it would be a waste of such a
+limited resource.
+
+That's pretty much it. Now current mana will stay in sync for the gui display automatically and you'll send far fewer
+packets. If you ever run into a conflict with another watchable object using the same index '20', you only need to
+change the value of MANA_WATCHER to update every instance in your code.
+*/
+/**
  * Step 4: Adding another kind of Extended Properties
  */
 /*
