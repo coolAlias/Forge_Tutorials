@@ -642,7 +642,7 @@ public class RegisterKeyBindings
 	private static final int[] keyValues = {Keyboard.KEY_O};
 
 	/** Maps Keyboard values to Tutorial KeyBinding index values (e.g. CUSTOM_INV returns KEY_O) */
-	public static final Map<Integer, Integer> TutKeyMap = new HashMap<Integer, Integer>();
+	public static final Map<Integer, Integer> tutKeyMap = new HashMap<Integer, Integer>();
 
 	/**
 	 * This will initialize all key bindings; I like to pass in a Configuration object, but
@@ -658,7 +658,7 @@ public class RegisterKeyBindings
 		{
 			key[i] = new KeyBinding(desc[i], keyValues[i]);
 			repeat[i] = false;
-			TutKeyMap.put(key[i].keyCode, i);
+			tutKeyMap.put(key[i].keyCode, i);
 		}
 
 		KeyBindingRegistry.registerKeyBinding(new TutKeyHandler(key, repeat));
@@ -684,13 +684,13 @@ public class TutKeyHandler extends KeyHandler
 	@Override
 	public void keyDown(EnumSet<TickType> types, KeyBinding kb, boolean tickEnd, boolean isRepeat)
 	{
-		if (tickEnd && RegisterKeyBindings.TutKeyMap.containsKey(kb.keyCode) && FMLCommonHandler.instance
+		if (tickEnd && RegisterKeyBindings.tutKeyMap.containsKey(kb.keyCode) && FMLCommonHandler.instance
 
 				().getEffectiveSide() == Side.CLIENT)
 		{
 			EntityPlayer player = FMLClientHandler.instance().getClient().thePlayer;
 
-			switch(RegisterKeyBindings.TutKeyMap.get(kb.keyCode)) {
+			switch(RegisterKeyBindings.tutKeyMap.get(kb.keyCode)) {
 			case RegisterKeyBindings.CUSTOM_INV:
 				// If the custom inventory screen is open, close it
 				if (player.openContainer != null && player.openContainer instanceof ContainerCustomPlayer)
