@@ -176,18 +176,14 @@ public class InventoryItem implements IInventory
 			if(stack.stackSize > amount)
 			{
 				stack = stack.splitStack(amount);
-				if(stack.stackSize == 0)
-				{
-					setInventorySlotContents(slot, null);
-				}
+				// Don't forget this line or your inventory will not be saved!
+				this.onInventoryChanged();
 			}
 			else
 			{
+				// this method also calls onInventoryChanged, so we don't need to call it again
 				setInventorySlotContents(slot, null);
 			}
-
-			// Don't forget this line or your inventory will not be saved!
-			this.onInventoryChanged();
 		}
 		return stack;
 	}
@@ -196,10 +192,7 @@ public class InventoryItem implements IInventory
 	public ItemStack getStackInSlotOnClosing(int slot)
 	{
 		ItemStack stack = getStackInSlot(slot);
-		if(stack != null)
-		{
-			setInventorySlotContents(slot, null);
-		}
+		setInventorySlotContents(slot, null);
 		return stack;
 	}
 
