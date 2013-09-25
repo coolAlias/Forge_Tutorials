@@ -95,10 +95,7 @@ public class InventoryCustomPlayer implements IInventory
 			if (stack.stackSize > amount)
 			{
 				stack = stack.splitStack(amount);
-				if (stack.stackSize == 0)
-				{
-					setInventorySlotContents(slot, null);
-				}
+				this.onInventoryChanged();
 			}
 			else
 			{
@@ -114,10 +111,7 @@ public class InventoryCustomPlayer implements IInventory
 	public ItemStack getStackInSlotOnClosing(int slot)
 	{
 		ItemStack stack = getStackInSlot(slot);
-		if (stack != null)
-		{
-			setInventorySlotContents(slot, null);
-		}
+		setInventorySlotContents(slot, null);
 		return stack;
 	}
 
