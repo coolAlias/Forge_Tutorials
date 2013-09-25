@@ -406,7 +406,7 @@ public class SlotArmor extends Slot
 	/** The parent class of this slot, ContainerPlayer, SlotArmor is a Anon inner class. */
 	final EntityPlayer player;
 
-	SlotArmor(EntityPlayer player, IInventory inventory, int par3, int par4, int par5, int par6)
+	public SlotArmor(EntityPlayer player, IInventory inventory, int par3, int par4, int par5, int par6)
 	{
 		super(inventory, par3, par4, par5);
 		this.player = player;
