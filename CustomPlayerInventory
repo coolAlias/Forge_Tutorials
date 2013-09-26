@@ -684,9 +684,7 @@ public class TutKeyHandler extends KeyHandler
 	@Override
 	public void keyDown(EnumSet<TickType> types, KeyBinding kb, boolean tickEnd, boolean isRepeat)
 	{
-		if (tickEnd && RegisterKeyBindings.tutKeyMap.containsKey(kb.keyCode) && FMLCommonHandler.instance
-
-				().getEffectiveSide() == Side.CLIENT)
+		if (tickEnd && RegisterKeyBindings.tutKeyMap.containsKey(kb.keyCode))
 		{
 			EntityPlayer player = FMLClientHandler.instance().getClient().thePlayer;
 
@@ -698,20 +696,11 @@ public class TutKeyHandler extends KeyHandler
 
 				// Otherwise, open the screen. Here you will need to send a packet to the server telling it
 				// to open the corresponding server gui element, or your inventory won't function
-				else if (FMLClientHandler.instance().getClient().inGameHasFocus)
-				{
-					// Send a packet to the server; here I use a custom packet class to build the packet for me
-					// Don't worry, we'll cover this in the next step
-					((EntityClientPlayerMP) player).sendQueue.addToSendQueue(PacketOpenServerGui.getPacket
-
-							(TutorialMain.GUI_CUSTOM_INV));
-
-					// Since we're already client side, we can open the client gui element from here
-					// Alternatively, you can send a packet back from the server after it is notified to open
-					// the server gui element, telling the client packet handler to open the client gui element...
-					player.openGui(TutorialMain.instance, TutorialMain.GUI_CUSTOM_INV, player.worldObj, (int) player.posX, (int) 
-
-							player.posY, (int) player.posZ);
+				else if (FMLClientHandler.instance().getClient().inGameHasFocus) {
+					// Send a packet to the server using a method we'll create in the next step
+					TutorialPacketHandler.sendOpenGuiPacket(TutorialMain.GUI_CUSTOM_INV);
+					// opening the gui server side automatically opens the client side as well,
+					// so we don't need to do anything else
 				}
 				break;
 			}
@@ -771,7 +760,7 @@ if (packet.channel.equals("tutchannel"))
 	// Handle each case appropriately:
 	switch(packetType) {
 	case EXTENDED_PROPERTIES: handleExtendedProperties(packet, player, inputStream); break;
-	case OPEN_SERVER_GUI: handleOpenServerGui(packet, (EntityPlayer) player, inputStream); break;
+	case OPEN_SERVER_GUI: handleOpenGuiPacket(packet, (EntityPlayer) player, inputStream); break;
 	default: System.out.println("[PACKET][WARNING] Unknown packet type " + packetType);
 	}
 }
@@ -782,7 +771,7 @@ if (packet.channel.equals("tutchannel"))
 /**
  * This method will open the appropriate server gui element for the player
  */
-private void handleOpenServerGui(Packet250CustomPayload packet, EntityPlayer player, DataInputStream inputStream)
+private void handleOpenGuiPacket(Packet250CustomPayload packet, EntityPlayer player, DataInputStream inputStream)
 {
 	int guiID;
 	// inputStream is already open, so we don't need to do anything other than continue reading from it:
@@ -792,29 +781,28 @@ private void handleOpenServerGui(Packet250CustomPayload packet, EntityPlayer pla
 		e.printStackTrace();
 		return;
 	}
-	// Now we can open the server gui element:
+	
+	// Now we can open the server gui element, which will automatically open the client element as well:
 	player.openGui(TutorialMain.instance, guiID, player.worldObj, (int) player.posX, (int) player.posY, (int) player.posZ);
 }
 
-// Pretty simple. So how about that custom packet we sent earlier, PacketOpenServerGui?
-// It's a very basic class with only a single static method:
-public class PacketOpenServerGui
+// Here's the method we used in the last step to send the packet:
+/**
+ * Sends a packet to the server telling it to open gui for player
+ */
+public static final void sendOpenGuiPacket(int guiId)
 {
-	public static Packet250CustomPayload getPacket(int guiID)
-	{
-		ByteArrayOutputStream bos = new ByteArrayOutputStream(5);
-		DataOutputStream outputStream = new DataOutputStream(bos);
-
-		try {
-			// Notice this first line writes the packet id - do this in your ExtendedPlayer.sync() method as well and add 1 to the size.
-			outputStream.writeByte(TutorialPacketHandler.OPEN_SERVER_GUI);
-			outputStream.writeInt(guiID);
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		}
-
-		return new Packet250CustomPayload("tutchannel", bos.toByteArray());
+	ByteArrayOutputStream bos = new ByteArrayOutputStream();
+	DataOutputStream outputStream = new DataOutputStream(bos);
+	
+	try {
+		outputStream.writeByte(OPEN_SERVER_GUI);
+		outputStream.writeInt(guiId);
+	} catch (Exception ex) {
+		ex.printStackTrace();
 	}
+	
+	PacketDispatcher.sendPacketToServer(PacketDispatcher.getPacket("tutchannel", bos.toByteArray()));
 }
 /**
  * Step 5: Troubleshooting
