@@ -101,8 +101,6 @@ public class InventoryCustomPlayer implements IInventory
 			{
 				setInventorySlotContents(slot, null);
 			}
-
-			this.onInventoryChanged();
 		}
 		return stack;
 	}
@@ -185,39 +183,38 @@ public class InventoryCustomPlayer implements IInventory
 		// For now, only ItemUseMana items can be stored in these slots
 		return itemstack.getItem() instanceof ItemUseMana;
 	}
-
-	public void writeToNBT(NBTTagCompound tagcompound)
+	
+	public void writeToNBT(NBTTagCompound compound)
 	{
-		NBTTagList nbttaglist = new NBTTagList();
+		NBTTagList items = new NBTTagList();
 
-		for (int i = 0; i < this.getSizeInventory(); ++i)
+		for (int i = 0; i < getSizeInventory(); ++i)
 		{
-			if (this.getStackInSlot(i) != null)
+			if (getStackInSlot(i) != null)
 			{
-				NBTTagCompound nbttagcompound1 = new NBTTagCompound();
-				nbttagcompound1.setByte("Slot", (byte) i);
-				this.getStackInSlot(i).writeToNBT(nbttagcompound1);
-				nbttaglist.appendTag(nbttagcompound1);
+				NBTTagCompound item = new NBTTagCompound();
+				item.setByte("Slot", (byte) i);
+				getStackInSlot(i).writeToNBT(item);
+				items.appendTag(item);
 			}
 		}
-
+		
 		// We're storing our items in a custom tag list using our 'tagName' from above
 		// to prevent potential conflicts
-		tagcompound.setTag(tagName, nbttaglist);
+		compound.setTag(tagName, items);
 	}
 
-	public void readFromNBT(NBTTagCompound tagcompound)
+	public void readFromNBT(NBTTagCompound compound)
 	{
-		NBTTagList nbttaglist = tagcompound.getTagList(tagName);
+		NBTTagList items = compound.getTagList(tagName);
 
-		for (int i = 0; i < nbttaglist.tagCount(); ++i)
+		for (int i = 0; i < items.tagCount(); ++i)
 		{
-			NBTTagCompound nbttagcompound1 = (NBTTagCompound)nbttaglist.tagAt(i);
-			byte b0 = nbttagcompound1.getByte("Slot");
+			NBTTagCompound item = (NBTTagCompound) items.tagAt(i);
+			byte slot = item.getByte("Slot");
 
-			if (b0 >= 0 && b0 < this.getSizeInventory())
-			{
-				this.setInventorySlotContents(b0, ItemStack.loadItemStackFromNBT(nbttagcompound1));
+			if (slot >= 0 && slot < getSizeInventory()) {
+				setInventorySlotContents(slot, ItemStack.loadItemStackFromNBT(item));
 			}
 		}
 	}
