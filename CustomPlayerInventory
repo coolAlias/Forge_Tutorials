@@ -767,7 +767,7 @@ if (packet.channel.equals("tutchannel"))
 
 // Notice that handleExtendedProperties now has a DataInputStream type argument, so you can remove the
 // new instance of one in that method
-// As for handleOpenServerGui, here's that method:
+// As for handleOpenGuiPacket, here's that method:
 /**
  * This method will open the appropriate server gui element for the player
  */
