@@ -211,18 +211,28 @@ ensure your method is the one called.
  * Step 3: Registering your custom entity and renderer.
  */
 /*
-We've set up our custom Entity class, but Minecraft doesn't know about it yet. So
-we have to let it know in our ClientProxy using EntityRegistry.registerModEntity
-and tell it what renderer to use using RenderingRegistry.registerEntityRenderingHandler.
-Here's how:
+We've set up our custom Entity class, but Minecraft doesn't know about it yet. So we have to let it know in using
+EntityRegistry.registerModEntity in our main mod load method and tell it what renderer to use using
+RenderingRegistry.registerEntityRenderingHandler in our ClientProxy. Here's how:
  */
+// First in your main mod class:
+// I like using an incrementable index to set my IDs rather than writing 1, 2, 3, etc., so I never have
+// to worry about order or if I missed a number (doesn't really matter though)
+private static int modEntityID = 0;
+
+@EventHandler
+public void load(FMLInitializationEvent event)
+{
+	// If you have a lot of Entities to register, consider creating a class with a static 'initEntity' method
+	// so your main class stays tidy and readable
+	EntityRegistry.registerModEntity(EntityThrowingRock.class, "Throwing Rock", ++modEntityID, this, 64, 10, true);
+}
+// Now to the ClientProxy:
 public class ClientProxy extends CommonProxy
 {
 	@Override
 	public void registerRenderers()
 	{
-		int modEntityID = 0;
-		EntityRegistry.registerModEntity(EntityThrowingRock.class, "Throwing Rock", ++modEntityID, YourModName.instance, 64, 10, true);
 		RenderingRegistry.registerEntityRenderingHandler(EntityThrowingRock.class, new RenderSnowball(YourModName.throwingRock));
 	}
 }
