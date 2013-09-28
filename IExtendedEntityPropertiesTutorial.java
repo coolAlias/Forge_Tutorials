@@ -23,7 +23,7 @@ Prerequisites:
 NOTES: Updating from Forge 804 to 871
 Three things you'll need to change in your GUI files:
 1. I18n.func_135053_a() is now I18n.getString()
-2. mc.func_110434_K() is now mc.renderEngine
+2. mc.func_110434_K() is now mc.renderEngine OR mc.getTextureManager()
 3. renderEngine.func_110577_a() is now renderEngine.bindTexture()
 
 IMPORTANT NOTE: Using IExtendedEntityProperties adds new data to entities, and the server handles initializing,
@@ -413,7 +413,7 @@ public class GuiManaBar extends Gui
 		GL11.glDisable(GL11.GL_LIGHTING);
 		
 		// Bind your texture to the render engine
-		this.mc.renderEngine.bindTexture(texturepath);
+		this.mc.getTextureManager().bindTexture(texturepath);
 		
 		/*
 		The parameters for drawTexturedModalRect are as follows:
