@@ -22,7 +22,7 @@ http://www.minecraftforum.net/topic/1798625-162sobiohazardouss-forge-keybinding-
 NOTES on Updating from Forge 804 to 871:
 Three things you'll need to change in your GUI files:
 1. I18n.func_135053_a() in now I18n.getString()
-2. mc.func_110434_K() is now mc.renderEngine
+2. mc.func_110434_K() is now mc.renderEngine OR mc.getTextureManager()
 3. renderEngine.func_110577_a() is now renderEngine.bindTexture()
 
 Now on to the tutorial!
@@ -754,7 +754,7 @@ public class GuiItemInventory extends GuiContainer
 	protected void drawGuiContainerBackgroundLayer(float par1, int par2, int par3)
 	{
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-		this.mc.renderEngine.bindTexture(iconLocation);
+		this.mc.getTextureManager().bindTexture(iconLocation);
 		int k = (this.width - this.xSize) / 2;
 		int l = (this.height - this.ySize) / 2;
 		this.drawTexturedModalRect(k, l, 0, 0, this.xSize, this.ySize);
