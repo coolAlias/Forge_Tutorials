@@ -439,14 +439,15 @@ public class GuiManaBar extends Gui
 	}
 }
 /*
-You will need to add this code to your main mod class postInit method in order to register
-your new GuiManaBar overlay as an active event (just like registering your EventHandler),
-otherwise nothing will appear.
- */
+You will need to add this code to your main mod class postInit method in order to register your new GuiManaBar
+overlay as an active event (just like registering your EventHandler), otherwise nothing will appear. Recall that
+the Gui is client side only, so you will get an error if you try to register it on both sides.
+*/
 @EventHandler
 public void postInit(FMLPostInitializationEvent event)
 {
-	MinecraftForge.EVENT_BUS.register(new GuiManaBar(Minecraft.getMinecraft()));
+if (FMLCommonHandler.instance().getSide().isClient())
+MinecraftForge.EVENT_BUS.register(new GuiManaBar(Minecraft.getMinecraft()));
 }
 /*
 Alright, try it out. There should be a horizontal mana bar in the upper-left corner of 
