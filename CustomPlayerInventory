@@ -721,7 +721,7 @@ public class TutKeyHandler extends KeyHandler
 // when you initialize RegisterKeyBindings.
 
 // Register KeyHandler in one of the load/post-init methods of your main mod:
-if (FMLCommonHandler.instance().getEffectiveSide() == Side.CLIENT)
+if (FMLCommonHandler.instance().getEffectiveSide().isClient())
 	RegisterKeyBindings.init();
 
 /**
