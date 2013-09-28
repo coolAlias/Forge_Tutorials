@@ -446,7 +446,7 @@ the Gui is client side only, so you will get an error if you try to register it 
 @EventHandler
 public void postInit(FMLPostInitializationEvent event)
 {
-if (FMLCommonHandler.instance().getSide().isClient())
+if (FMLCommonHandler.instance().getEffectiveSide().isClient())
 MinecraftForge.EVENT_BUS.register(new GuiManaBar(Minecraft.getMinecraft()));
 }
 /*
@@ -531,7 +531,7 @@ public final void sync()
 	Packet250CustomPayload packet = new Packet250CustomPayload("tutchannel", bos.toByteArray);
 	
 	// We only want to send from the server to the client
-	if (FMLCommonHandler.instance().getEffectiveSide() == Side.SERVER) {
+	if (FMLCommonHandler.instance().getEffectiveSide().isServer()) {
 		EntityPlayerMP player1 = (EntityPlayerMP) player;
 		PacketDispatcher.sendPacketToPlayer(packet, (Player) player1);
 	}
