@@ -226,6 +226,9 @@ public void load(FMLInitializationEvent event)
 	// If you have a lot of Entities to register, consider creating a class with a static 'initEntity' method
 	// so your main class stays tidy and readable
 	EntityRegistry.registerModEntity(EntityThrowingRock.class, "Throwing Rock", ++modEntityID, this, 64, 10, true);
+	
+	// Now that we've registered the entity, tell the proxy to register the renderer
+	proxy.registerRenderers();
 }
 // Now to the ClientProxy:
 public class ClientProxy extends CommonProxy
