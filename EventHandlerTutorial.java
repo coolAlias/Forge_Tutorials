@@ -184,25 +184,39 @@ Variables: EntityLivingBase entity
 Called whenever entity jumps.
 Uses: Useful for entity.motionY += 10.0D. Just give it a try 
 
-9. LivingHurtEvent
+9. LivingAttackEvent
+Variables: EntityLivingBase entity, DamageSource source, float ammount
+Called when an entity is attacked, but before any damage is applied
+Uses: Cancelable. Here you can do pre-processing of an attack before LivingHurtEvent is called. The source entity of
+the attack is stored in DamageSource, and you can adjust the damage to be dealt however you see fit. Basically the
+same uses as LivingHurtEvent, but done sooner.
+
+10. LivingHurtEvent
 Variables: EntityLivingBase entity, DamageSource source, float ammount
 Called when an entity is damaged, but before any damage is applied
 Uses: Another super useful one if you have custom armor that reduces fire damage, increases damage taken from magic,
-resurrects the entity if ammount is greater than current health or whatever.
+do something if ammount is greater than current health or whatever.
 
-10. EntityInteractEvent
+11. LivingDeathEvent
+Variables: EntityLivingBase entity, DamageSource source
+Called when an entity dies; cancelable!
+Uses: Recall that DamageSource has lots of variables, too, such as getEntity() that returns the entity that caused the
+damage and thus that killed the current entity. All sorts of things you could do with that. This is also the place to
+cancel death and resurrect yourself, or set a timer for resurrection. If you have data you want to persist through
+player death, such as IExtendedEntityProperties, you can save that here as well.
+
+12. EntityInteractEvent
 Variables: EntityPlayer player, Entity target
 Called when the player right-clicks on an entity, such as a cow
 Uses: Gee, you could do anything with this. One use could be getting milk into your custom bucket...
 
-11. EntityItemPickupEvent
+13. EntityItemPickupEvent
 Variables: EntityPlayer player, EntityItem item
 Called when the player picks up an item
-Uses: This one is useful for special items that need handling on pickup; an example would be if you made
-something similar to experience orbs, mana orbs for instance, that replenish mana rather than adding an item to
-inventory
+Uses: This one is useful for special items that need handling on pickup; an example would be if you made something
+similar to experience orbs, mana orbs for instance, that replenish mana rather than adding an item to inventory
 
-12. HarvestCheck
+14. HarvestCheck
 Variables: EntityPlayer player, Block block, boolean success
 Called when the player breaks a block before the block releases its drops
 Uses: Coupled with the BreakSpeed event, this is perhaps the best way to change the behavior of mining.
