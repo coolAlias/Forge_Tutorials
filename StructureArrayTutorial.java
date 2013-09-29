@@ -1,4 +1,6 @@
 /*
+This tutorial is for use with my Structure Generation Tool, NOT regular minecraft structures.
+
 In this tutorial I will cover how to build your structure using an array from scratch.
 Please also refer to the instructions in 'StructureArrays.java' for more information.
 */
