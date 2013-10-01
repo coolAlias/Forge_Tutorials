@@ -439,6 +439,28 @@ public class GuiManaBar extends Gui
 	}
 }
 /*
+If you want to make your mana bar look really sweet with some transparency like the hotbar slots, then you'll have
+to add a little extra code and make sure your texture is set up correctly. An easy way to do that is to open the
+minecraft jar in 7-zip and extract the texture containing the hotbar (called 'widgets'), then copy the transparent
+part of the texture into your file.
+
+Note if you use the following code, you'll need to use 'mana_bar2.png' instead.
+*/
+// Add this block of code before you draw the section of your texture containing transparency
+GL11.glEnable(GL11.GL_BLEND);
+GL11.glDisable(GL11.GL_DEPTH_TEST);
+GL11.glDepthMask(false);
+GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+GL11.glDisable(GL11.GL_ALPHA_TEST);
+// Here we draw the background bar which contains a transparent section; note the new size
+drawTexturedModalRect(xPos, yPos, 0, 0, 56, 9);
+// You can keep drawing without changing anything
+int manabarwidth = (int)(((float) props.getCurrentMana() / props.getMaxMana()) * 49);
+drawTexturedModalRect(xPos + 3, yPos + 3, 0, 9, manabarwidth, 3);
+/*
+Now when you use up your mana, the background bar will be semi-transparent. Cool!
+
 You will need to add this code to your main mod class postInit method in order to register your new GuiManaBar
 overlay as an active event (just like registering your EventHandler), otherwise nothing will appear. Recall that
 the Gui is client side only, so you will get an error if you try to register it on both sides.
