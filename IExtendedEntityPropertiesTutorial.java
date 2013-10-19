@@ -455,9 +455,12 @@ GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 GL11.glDisable(GL11.GL_ALPHA_TEST);
 // Here we draw the background bar which contains a transparent section; note the new size
 drawTexturedModalRect(xPos, yPos, 0, 0, 56, 9);
-// You can keep drawing without changing anything
+// You can keep drawing without changing anything, but see the following note!
 int manabarwidth = (int)(((float) props.getCurrentMana() / props.getMaxMana()) * 49);
 drawTexturedModalRect(xPos + 3, yPos + 3, 0, 9, manabarwidth, 3);
+// NOTE: be sure to reset the openGL settings after you're done or your character model will be messed up
+GL11.glEnable(GL11.GL_DEPTH_TEST);
+GL11.glDepthMask(true);
 /*
 Now when you use up your mana, the background bar will be semi-transparent. Cool!
 
