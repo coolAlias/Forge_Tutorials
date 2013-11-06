@@ -385,7 +385,9 @@ RenderingRegistry.registerEntityRenderingHandler(EntityThrowingRock.class, new R
 // to this:
 RenderingRegistry.registerEntityRenderingHandler(EntityThrowingRock.class, new RenderThrowingRock(YourModName.throwingRock));
 
-Now all you need to do is play around with the variables and see what you can get it to do. 
+Now all you need to do is play around with the variables and see what you can get it to do. Keep in mind this step
+is ONLY necessary IF you want rendering behavior different from vanilla, otherwise save yourself lots of time and
+just use RenderSnowball with your Item as the parameter, like in Step 3.
 */
 
 /**
@@ -404,4 +406,14 @@ First, please read ALL sections of the above tutorial carefully. Then see if you
 	CommonProxy and ClientProxy?
 7. Is your modid the same throughout all of your code? See my tutorial on creating a ModInfo
 	file to prevent common errors of this sort.
+
+Other problems will be noted below. I will update this section if anyone has further problems that aren't addressed
+elsewhere.
+
+PROBLEM: Null Pointer Exception at line 42 of your Render class
+at Icon icon = this.field_94151_a.getIconFromDamage(this.field_94150_f);
+
+SOLUTION: Be sure to finish initializing all Items before registering the Render class, otherwise the Item's icon
+will be null when the Render is registered, resulting in an NPE.
+
 */
