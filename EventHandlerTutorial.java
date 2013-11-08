@@ -9,7 +9,10 @@ so much you can do with these it's incredible.
 I personally prefer using EventHandler over TickHandler for this very reason - most things you could ever want to do
 already have a framework built to handle it, whereas Tick Handler you have to build it all yourself.
 
-Here's how to make one:
+This tutorial will cover:
+1. Building and using an Event Handler
+2. Advanced information for handling events
+3. A sampling of Event types and their possible uses
 */
 
 /**
@@ -126,6 +129,73 @@ public void methodName(EventType event)
 {
 	// do whatever you want here
 }
+
+/*
+ * Advanced Information: Setting Priority
+ */
+/*
+Priority is the order in which all listeners listening to a posted event are called. A listener is a method with the
+@ForgeSubscribe annotation, and is said to be actively listening if the class containing the method was registered to
+the MinecraftForge EVENT_BUS. Whenever an event is posted matching the parameters of the listener, the listener's
+method is called.
+
+When there are multiple listeners listening to a single event, the order in which they are called is important if one
+listener's functionality relies on having first or last access to the event in process, or if it relies on information
+set by a prior listener. This can be especially useful with Cancelable events.
+
+A single Event can be handled multiple times by different handlers or even within the same handler provided the methods
+have different names:
+*/
+@ForgeSubscribe
+public void onLivingHurt(LivingHurtEvent event) {}
+
+@ForgeSubscribe
+public void onPlayerHurt(LivingHurtEvent event) {}
+/*
+Both methods will be called each time a LivingHurtEvent is posted to the EVENT_BUS in the order they are added to
+the event listener (see IEventListener), which in the case above is simply their order in the code. The order can
+be controlled by appending (priority=VALUE) to the @ForgeSubscribe annotation, where VALUE is defined in the
+EventPriority enum class. HIGHEST priority is always called first, while LOWEST priority is called last.
+*/
+// this method will now be called after 'onPlayerHurt()'
+@ForgeSubscribe(priority=LOWEST)
+public void onLivingHurt(LivingHurtEvent event) {}
+
+@ForgeSubscribe(priority=HIGHEST)
+public void onPlayerHurt(LivingHurtEvent event) {}
+/*
+If two listeners have the same priority level, then the order is again controlled by the order in which they are added.
+In order to control the flow for such a case within a mod, the methods can be placed in separate 'event handler'
+classes to be registered in the order desired:
+*/
+// In the case of identical priority levels, PlayerHurtHandler will process first
+MinecraftForge.EVENT_BUS.register(new PlayerHurtHandler());
+MinecraftForge.EVENT_BUS.register(new LivingHurtHandler());
+// For multiple Mods that affect the same events, the order of mod registration would have the same effect.
+/*
+ * Advanced Information: Cancelable Events
+ */
+/*
+Events with the @Cancelable annotation have the special quality of being cancelable. Once an event is canceled,
+subsequent listeners will not process the event unless provided with special annotation:
+*/
+@ForgeSubscribe // default priority, so it will be called first
+public void onLivingHurt(LivingHurtEvent event) {
+event.setCanceled(true);
+}
+
+@ForgeSubscribe(priority=LOWEST, receiveCanceled=true)
+public void onPlayerHurt(LivingHurtEvent event) {
+// un-cancel the event
+event.setCanceled(false);
+}
+/*
+By controlling the order in which each listener method is called, it is usually possible to avoid un-canceling a
+previously canceled event, although exceptional circumstances do arise; in those cases, extra care must be taken
+to avoid making logical errors.
+
+More will be added as I learn. Thanks to GotoLink for his excellent explanations regarding priority.
+*/
 
 /*
  Now for some examples of Event types, their variables, when they are called and
