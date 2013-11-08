@@ -39,6 +39,9 @@ public class TradeHandler implements IVillageTradeHandler
 			// use metadata in either case
 			recipeList.add(new MerchantRecipe(new ItemStack(Item.dye, 4, 15), // dye of metadata 15 is bonemeal, so we need 4 bonemeals
 					new ItemStack(YourMod.youritem, 1, 6))); // to buy 1 mod item of metadata value 6
+			
+			// use the vanilla Item method to easily construct an ItemStack containing an enchanted book of any level
+                        recipeList.add(new MerchantRecipe(new ItemStack(Item.diamond, 1), Item.enchantedBook.getEnchantedItemStack(new EnchantmentData(Enchantment.flame, 1))));
 			break;
 		case 2: // PRIEST
 			// trading two itemstacks for one itemstack in return
