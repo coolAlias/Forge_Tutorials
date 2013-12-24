@@ -198,8 +198,19 @@ More will be added as I learn. Thanks to GotoLink for his excellent explanations
 */
 
 /*
- Now for some examples of Event types, their variables, when they are called and
- what you might do with them:
+ Now for some examples of Event types, their variables, when they are called and what you might do with them, but
+ first a word of warning: many of these events ONLY get called on one side or the other, so if something is not
+ working as expected, check which side(s) the event is being called on and it may surprise you.
+
+ An easy way to check is to put a line of debugging code at the beginning of each event method, so long as that event
+ has access to some kind of entity:
+*/
+@ForgeSubscribe
+public void someEventMethod(SomeEvent event) {
+	System.out.println("Some event called; is this the client side? " + event.entity.worldObj.isRemote);
+}
+/*
+Now on to the events!
 
 1. ArrowNockEvent
 Variables: EntityPlayer player, ItemStack result
