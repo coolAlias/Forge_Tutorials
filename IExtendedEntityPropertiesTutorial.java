@@ -20,6 +20,9 @@ Prerequisites:
 1. Know how to set up and use Forge Events. See my tutorial on creating an EventHandler.
 2. Willingness to read carefully.
 
+NOTES: Updating from Minecraft 1.6.4 to Minecraft 1.7.2
+These can be found at the end of the tutorial.
+
 NOTES: Updating from Forge 804 to 871
 Three things you'll need to change in your GUI files:
 1. I18n.func_135053_a() is now I18n.getString()
@@ -459,6 +462,7 @@ drawTexturedModalRect(xPos, yPos, 0, 0, 56, 9);
 int manabarwidth = (int)(((float) props.getCurrentMana() / props.getMaxMana()) * 49);
 drawTexturedModalRect(xPos + 3, yPos + 3, 0, 9, manabarwidth, 3);
 // NOTE: be sure to reset the openGL settings after you're done or your character model will be messed up
+GL11.glDisable(GL11.GL_BLEND);
 GL11.glEnable(GL11.GL_DEPTH_TEST);
 GL11.glDepthMask(true);
 /*
@@ -1095,4 +1099,150 @@ protected void handlePlayerDataPacket(Packet250CustomPayload packet, EntityPlaye
 Thanks again to Seigneur_Necron for these great tips!
 
 And that's how it's done, folks. Happy modding. :D
+*/
+
+NOTES: Updating from 1.6.4 to 1.7.2
+First, be sure you have read and understood how to set up and use IExtendedEntityProperties in 1.6.4, or these notes will not help you very much. This is simply how to update existing code to the new 1.7.2 setup.
+
+1.7.2 Update 1: Updating IExtendedEntityProperties and the EventHandler
+For the EventHandler, pretty much all you have to do is replace @ForgeSubscribe with @SubscribeEvent and fix your imports. Everything else should work the same as before. Easy.
+
+For IExtendedEntityProperties, the changes are also simple:
+*/
+private static final String getSaveKey(EntityPlayer player) {
+// no longer a username field, so use the command sender name instead:
+return player.getCommandSenderName() + ":" + EXT_PROP_NAME;
+}
+
+public static final void loadProxyData(EntityPlayer player) {
+ExtendedPlayer playerData = ExtendedPlayer.get(player);
+NBTTagCompound savedData = CommonProxy.getEntityData(getSaveKey(player));
+if (savedData != null) { playerData.loadNBTData(savedData); }
+// we are replacing the entire sync() method with a single line; more on packets later
+// data can by synced just by sending the appropriate packet, as everything is handled internally by the packet class
+TutorialMain.packetPipeline.sendTo(new SyncPlayerPropsPacket(player), (EntityPlayerMP) player);
+}
+
+// remove the public void sync() method; it is no longer needed as it will be bundled in a packet
+/*
+1.7.2 Update 2: Updating the Network
+First, go check out the wiki tutorial on the new Netty packet handling: http://www.minecraftforge.net/wiki/Netty_Packet_Handling
+
+Once you have copied and pasted that code (seriously, it's that simple) into your project, you will need to make a new package for your packets and register them with the PacketPipeline. I do it like so:
+ */
+// modify this method from the wiki in the PacketPipeline class:
+public void initialise() {
+// NOTE: Be sure to change the channel from "TUT" to whatever you are using!!!
+this.channels = NetworkRegistry.INSTANCE.newChannel("TUT", this);
+
+// line added by me to register all my packets:
+registerPackets();
+}
+
+// And add this method right below it
+// IMPORTANT: Always remember to add your newly created packet classes here or you WILL crash
+public void registerPackets() {
+registerPacket(OpenGuiPacket.class);
+registerPacket(SyncPlayerPropsPacket.class);
+}
+// That's really all you have to do. Then you just make the packet classes themselves:
+
+// OpenGuiPacket
+public class OpenGuiPacket extends AbstractPacket
+{
+// this will store the id of the gui to open
+private int id;
+
+// The basic, no-argument constructor MUST be included to use the new automated handling
+public OpenGuiPacket() {}
+
+// if there are any class fields, be sure to provide a constructor that allows
+// for them to be initialized, and use that constructor when sending the packet
+public OpenGuiPacket(int id) {
+this.id = id;
+}
+
+@Override
+public void encodeInto(ChannelHandlerContext ctx, ByteBuf buffer) {
+// basic Input/Output operations, very much like DataOutputStream
+buffer.writeInt(id);
+}
+
+@Override
+public void decodeInto(ChannelHandlerContext ctx, ByteBuf buffer) {
+// basic Input/Output operations, very much like DataInputStream
+id = buffer.readInt();
+}
+
+@Override
+public void handleClientSide(EntityPlayer player) {
+// for opening a GUI, we don't need to do anything here
+}
+
+@Override
+public void handleServerSide(EntityPlayer player) {
+// because we sent the gui's id with the packet, we can handle all cases with one line:
+player.openGui(TutorialMain.instance, id, player.worldObj, (int) player.posX, (int) player.posY, (int) player.posZ);
+}
+}
+
+// SyncPlayerPropsPacket
+public class SyncPlayerPropsPacket extends AbstractPacket
+{
+// Previously, we've been writing each field in our properties one at a time,
+// but that is really annoying, and we've already done it in the save and load
+// NBT methods anyway, so here's a slick way to efficiently send all of your
+// extended data, and no matter how much you add or remove, you'll never have
+// to change the packet / synchronization of your data.
+
+// this will store our ExtendedPlayer data, allowing us to easily read and write
+private NBTTagCompound data;
+
+// The basic, no-argument constructor MUST be included to use the new automated handling
+public SyncPlayerPropsPacket() {}
+
+// We need to initialize our data, so provide a suitable constructor:
+public SyncPlayerPropsPacket(EntityPlayer player) {
+// create a new tag compound
+data = new NBTTagCompound();
+// and save our player's data into it
+ExtendedPlayer.get(player).saveNBTData(data);
+}
+
+@Override
+public void encodeInto(ChannelHandlerContext ctx, ByteBuf buffer) {
+// ByteBufUtils provides a convenient method for writing the compound
+ByteBufUtils.writeTag(buffer, data);
+}
+
+@Override
+public void decodeInto(ChannelHandlerContext ctx, ByteBuf buffer) {
+// luckily, ByteBufUtils provides an easy way to read the NBT
+data = ByteBufUtils.readTag(buffer);
+}
+
+@Override
+public void handleClientSide(EntityPlayer player) {
+// now we can just load the NBTTagCompound data directly; one and done, folks
+ExtendedPlayer.get(player).loadNBTData(data);
+}
+
+@Override
+public void handleServerSide(EntityPlayer player) {
+// we never send this packet to the server, so do nothing here
+}
+}
+
+/*
+1.7.2 Update 3: Updating the GuiManaBar
+In the Gui, fontRenderer is now fontRendererObj, and you need to change to I18n.format if you were using that to translate the names at all. Use the updated IInventory method names for getInventoryName(), etc.
+
+1.7.2 Update 4: Updating the Item class
+Everything is pretty much exactly the same, with a few minor differences:
+1. Remove the int parameter from the constructor; item IDs are history
+2. Change 'Icon' to 'IIcon' (two I's)
+3. Change 'IconRegister' to 'IIconRegister' (two I's)
+4. Update imports
+
+That should be it for updating to 1.7.2 if you've completed the rest of the tutorial.
 */
