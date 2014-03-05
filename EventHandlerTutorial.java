@@ -28,22 +28,51 @@ public class TutEventHandler
 }
 
 /**
- * Step 2: Register your event handler class to EVENT_BUS either in
- * 'load' or 'postInit' methods in your main mod
+ * Step 2: Registering your EventHandler
+ */
+/*
+Resgister your event handler class to EVENT_BUS either in 'load' or 'postInit' methods in your main mod. Note that this step is the same in both 1.6.4 and 1.7.2, but see below for more information on the different event buses.
  */
 
 @EventHandler
 public void load(FMLInitializationEvent event)
 {
+	// IMPORTANT: Be sure to register your handler on the correct bus!!! (see below)
+
+	// the majority of events use the MinecraftForge event bus:
 	MinecraftForge.EVENT_BUS.register(new TutEventHandler());
+
+	// but some are on the FML bus:
+	FMLCommonHandler.instance().bus().register(new YourFMLEventHandler());
 }
 
-// You're finished! That was easy  But it doesn't do anything right now,
-// so on to step 3.
+/*
+NOTE: Registering to the correct BUS
 
+You have followed all the steps and your event handling methods just do not seem to be working, what could possibly be going on? Well, each event is posted to a different event bus, and if your event handler is registered to the incorrect bus, then your method will never get called. The vast majority of events are posted to the MinecraftForge.EVENT_BUS, but there are several other event buses:
+
+1. MinecraftForge.EVENT_BUS: Most events get posted to this bus.
+
+2. MinecraftForge.TERRAIN_GEN_BUS: Most world generation events happen here, such as Populate, Decorate, etc., with the strange exception that Pre and Post events are on the regular EVENT_BUS
+
+3. MinecraftForge.ORE_GEN_BUS: Ore generation, obviously
+
+4. FML Events: these become very important in 1.7.2, as this is where TickEvents and KeyInputEvents are posted, with TickHandler and KeyHandler no longer existing.
+
+It is very important to register your event handler to the correct event bus, and only put those events that get posted to a certain event bus in a handler registered to that bus, or your event handling will fail.
+
+You're finished! That was easy  But it doesn't do anything right now, so on to step 3.
+*/
 /**
- * Step 3: Look through MinecraftForge event types for ones you want to use
- * and add them to your TutEventHandler
+ * Step 3: Add events to your event handler (an example)
+ */
+/*
+Look through MinecraftForge event types for ones you want to use and add them to your EventHandler by creating a new method with the appropriate Event as a parameter.
+
+1.6.4: It must be prefaced by "@ForgeSubscribe" so that it gets called automatically at the right times.
+1.7.2: It must be prefaced by "@SubscribeEvent" so that it gets called automatically at the right times.
+
+Do not, I repeat do NOT edit the event classes directly. Also, you do NOT need to make a class extending the Event class.
  */
 
 // In your TutEventHandler class - the name of the method doesn't matter
@@ -74,9 +103,11 @@ public void onLivingUpdateEvent(LivingUpdateEvent event)
 
 /**
  * Step 4: Using Events in your custom classes
- * Forge Events are all hooked into automatically from vanilla code, but say
- * you made a custom Bow and want it to use ArrowNock and ArrowLoose events?
- * You need to post them to the event bus in your item code.
+ */
+/*
+Forge Events are all hooked into automatically from vanilla code, but say
+you made a custom Bow and want it to use ArrowNock and ArrowLoose events?
+You need to post them to the event bus in your item code.
  */
 
 /** ArrowNockEvent should be placed in 'onItemRightClick' */
@@ -117,11 +148,19 @@ public void onPlayerStoppedUsing(ItemStack itemstack, World world, EntityPlayer 
 }
 
 /**
- * Step 5: Adding events to your TutEventHandler
+ * Step 5: Adding events to your EventHandler
  */
-/* A template for whatever event method you want to make. Name it whatever you want,
-   but use the correct Event Type from above. Event variables are accessed by using 
-   'event.variableName' I give the variable names for many Events below.
+/*
+Look through MinecraftForge event types for ones you want to use and add them to your EventHandler by creating a new method with the appropriate Event as a parameter.
+
+1.6.4: It must be prefaced by "@ForgeSubscribe" so that it gets called automatically at the right times.
+1.7.2: It must be prefaced by "@SubscribeEvent" so that it gets called automatically at the right times.
+
+Do not, I repeat do NOT edit the event classes directly. Also, you do NOT need to make a class extending the Event class.
+
+The following is a template for whatever event method you want to make. Name it whatever you want, but use the correct Event Type from above.
+
+Event variables are accessed by using 'event.variableName' I give the variable names for many Events below.
  */
 
 @ForgeSubscribe
@@ -134,6 +173,8 @@ public void methodName(EventType event)
  * Advanced Information: Setting Priority
  */
 /*
+Note that event priority works exactly the same in 1.7.2, other than the primary annotation changing to @SubscribeEvent.
+
 Priority is the order in which all listeners listening to a posted event are called. A listener is a method with the
 @ForgeSubscribe annotation, and is said to be actively listening if the class containing the method was registered to
 the MinecraftForge EVENT_BUS. Whenever an event is posted matching the parameters of the listener, the listener's
@@ -210,7 +251,19 @@ public void someEventMethod(SomeEvent event) {
 	System.out.println("Some event called; is this the client side? " + event.entity.worldObj.isRemote);
 }
 /*
-Now on to the events!
+Now on to the events! But first, a word of warning: many of these events ONLY get called on one side or the other, so if something is not working as expected, check which side(s) the event is being called on and it may surprise you.
+
+An easy way to check is to put a line of debugging code at the beginning of each event method, so long as that event has access to some kind of entity:
+*/
+@ForgeSubscribe
+public void someEventMethod(SomeEvent event) {
+	System.out.println("Some event called; is this the client side? " + event.entity.worldObj.isRemote);
+}
+/*
+
+IMPORTANT: The following events are from 1.6.4; while many have not changed, some most certainly have.
+Always check the net.minecraftforge.event package for the available events, no matter what version
+of Minecraft you are modding for.
 
 1. ArrowNockEvent
 Variables: EntityPlayer player, ItemStack result
@@ -301,4 +354,130 @@ similar to experience orbs, mana orbs for instance, that replenish mana rather t
 Variables: EntityPlayer player, Block block, boolean success
 Called when the player breaks a block before the block releases its drops
 Uses: Coupled with the BreakSpeed event, this is perhaps the best way to change the behavior of mining.
+*/
+/**
+ * 1.7.2 TickEvents and Creating a TickHandler
+ */
+/*
+STOP!!! Chances are, you do NOT need to create a tick handler for whatever it is you are doing. There are many methods built-in to Minecraft that already act as tick handlers, and it is ALWAYS better to use them when you can. Why? Because they tick only when the object in question actually exists, whereas a generic tick handler processes every tick no matter what. Here are some of the pre-made tickers at your disposal:
+
+Entity#onUpdate: called every tick for each Entity; to manipulate vanilla entities, use LivingUpdateEvent
+TileEntity#onUpdate: called for tile entities every tick unless you tell it not to tick
+Item#onUpdate: called every tick while the specific item is in a player's inventory
+Item#onArmorTick: called only for armor each tick that it is equipped
+Block#updateTick: may be called randomly based on the block's tick rate, or it may be scheduled
+
+As you can see, nearly everything you could ever want to tick already has that capability. If what you want to do simply cannot be handled using one of the built-in tick methods, then and ONLY THEN should you consider creating a tick handler. Here's how to do so.
+
+In 1.7.2, as I'm sure many of you have noticed, the TickHandler class is gone, replaced by what appears to be a single TickEvent that we must now subscribe to in order to achieve the same functionality. Below, I will break it down and explain what exactly is going on and how to use it effectively.
+*/
+/**
+ * Step 1: Determine Which TickEvent to Use
+ */
+/*
+There are actually five different subclasses of TickEvent, each called on a specific in-game tick and on a specific side or sides. It is very important to understand the difference between these events and to use the appropriate one:
+
+ServerTickEvent: called on the server side only
+ClientTickEvent: called on the client side only
+WorldTickEvent: both sides
+PlayerTickEvent: both sides
+RenderTickEvent: client side only and called each render tick
+
+When creating a TickHandler, be sure NOT to subscribe to the generic "TickEvent", as that will listen to every single tick type on every single tick, which is just wasting processing time.
+
+Once you decide which tick you need, then it is time to create a new TickHandler class.
+*/
+/**
+ * Step 2: Create a TickHandler
+ */
+/*
+For now, we are just going to use the old name TickHandler, though we are really creating an event handler to listen to a specific tick. As an example, I will create a RenderTickEvent handler, since that is what I used in Zelda Sword Skills to make the spin attack motion smooth.
+*/
+// RenderTick is client side only, so we can place the SideOnly annotation here if we want:
+@SideOnly(Side.CLIENT)
+public class RenderTickHandler {
+	// we only need one method here, and you can name it whatever you want, but
+	// I like to name it according to the tick to which I am listening:
+	@SubscribeEvent
+	public void onRenderTick(RenderTickEvent event) {
+		// now you can do whatever you want during each render tick, such as rotate the player's view
+	}
+}
+/*
+If you need to do different things at the beginning of the tick than at the end of the tick, you can check the tick event's phase in your onWhateverTick method; this is applicable for all TickEvents.
+*/
+if (event.phase == Phase.START) {
+	// this is the equivalent of tickStart
+}
+if (event.phase == Phase.END) {
+	// and this is the equivalent of tickEnd
+}
+
+// if you have a lot of stuff going on in each of those, you could separate them into separate methods:
+@SubscribeEvent
+public void onRenderTick(RenderTickEvent event) {
+	if (event.phase == Phase.START) {
+		onTickStart();
+	} else {
+		onTickEnd();
+	}
+}
+/*
+One other thing to mention here is that since we are on the client side, we might be using Minecraft.getMinecraft() quite a lot to access things like the world, player, etc. Since it would be very wasteful to have to do this each and every tick, a better way is to store the instance of Minecraft when you construct your tick handler:
+*/
+@SideOnly(Side.CLIENT)
+public class RenderTickHandler {
+	/** Stores an instance of Minecraft for easy access */
+	private Minecraft mc;
+
+	// create a constructor that takes a Minecraft argument; now we have it whenever we need it
+	public RenderTickHandler(Minecraft mc) {
+		this.mc = mc;
+	}
+
+	@SubscribeEvent
+	public void onRenderTick(RenderTickEvent event) {
+		if (event.phase == Phase.START) {
+			// we will make the player spin constantly in circles:
+			mc.thePlayer.rotationYaw += 10.0F;
+		}
+	}
+}
+
+/**
+ * Step 3: Registering Your TickHandler
+ */
+/*
+All TickEvents need to be registered to the FMLCommonHandler event bus, NOT the MinecraftForge EVENT_BUS. For our client-sided render tick handler, we will do this in the ClientProxy, because we will crash the game if we try to register it in a method that is run on the server.
+*/
+public class CommonProxy {
+/**
+ * We will call this method from our main mod class' FMLPreInitializationEvent method
+ */
+public void initialize() {
+	// since we are not registering a tick handler that ticks on the server, we will not put anything here for now
+	// but if you had a WorldTickEvent or PlayerTickEvent, for example, this is where you should register it
+	// if you try to register the RenderTickHandler here, your game WILL crash
+	}
+}
+
+public class ClientProxy extends CommonProxy {
+	// Our ClientProxy method only gets run on the client side, so it is safe to register our RenderTickHandler here
+	@Override
+	public void initialize() {
+	// calling super will register any 2-sided tick handlers you have that are registered in the CommonProxy
+	// this is important since the CommonProxy will only register it on the server side, and you will need it
+	// registered on the client as well; however, we do not have any at this point
+	super.initialize();
+
+	// here we register our RenderTickHandler - be sure to pass in the instance of Minecraft!
+	FMLCommonHandler.instance().bus().register(new RenderTickHandler(Minecraft.getMinecraft()));
+
+	// this is also an ideal place to register things like KeyBindings
+	}
+}
+/*
+That should be all you need to use TickEvents successfully and efficiently. Remember, NEVER subscribe to TickEvent, ONLY subscribe to the specific type of tick event that you really need, just as you would never subscribe to Event...
+
+Good luck with 1.7.2!
 */
