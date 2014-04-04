@@ -133,26 +133,26 @@ public class InventoryItem implements IInventory
 	private String name = "Inventory Item";
 	
 	/** Provides NBT Tag Compound to reference */
-	private final ItemStack stack;
+	private final ItemStack invItem;
 
 	/** Defining your inventory size this way is handy */
 	public static final int INV_SIZE = 8;
 
 	/** Inventory's size must be same as number of slots you add to the Container class */
-	ItemStack[] inventory = new ItemStack[INV_SIZE];
+	private ItemStack[] inventory = new ItemStack[INV_SIZE];
 
 	/**
 	 * @param itemstack - the ItemStack to which this inventory belongs
 	 */
 	public InventoryItem(ItemStack itemstack)
 	{
-		this.stack = itemstack;
+		invItem = itemstack;
 
 		// Create a new NBT Tag Compound if one doesn't already exist, or you will crash
-		if (!this.stack.hasTagCompound()) { this.stack.setTagCompound(new NBTTagCompound()); }
+		if (!invItem.hasTagCompound()) { invItem.setTagCompound(new NBTTagCompound()); }
 
 		// Read the inventory contents from NBT
-		readFromNBT(this.stack.getTagCompound());
+		readFromNBT(invItem.getTagCompound());
 	}
 
 	@Override
@@ -207,7 +207,7 @@ public class InventoryItem implements IInventory
 		}
 
 		// Don't forget this line or your inventory will not be saved!
-		this.onInventoryChanged();
+		onInventoryChanged();
 	}
 
 	@Override
@@ -236,14 +236,14 @@ public class InventoryItem implements IInventory
 	@Override
 	public void onInventoryChanged()
 	{
-		for (int i = 0; i < this.getSizeInventory(); ++i)
+		for (int i = 0; i < getSizeInventory(); ++i)
 		{
-			if (this.getStackInSlot(i) != null && this.getStackInSlot(i).stackSize == 0)
-				this.setInventorySlotContents(i, null);
+			if (getStackInSlot(i) != null && getStackInSlot(i).stackSize == 0)
+				inventory[i] = null;
 		}
 		
 		// This line here does the work:		
-		this.writeToNBT(this.stack.getTagCompound());
+		writeToNBT(invItem.getTagCompound());
 	}
 
 	@Override
@@ -278,17 +278,16 @@ public class InventoryItem implements IInventory
 	public void readFromNBT(NBTTagCompound tagcompound)
 	{
 		// Gets the custom taglist we wrote to this compound, if any
-		NBTTagList nbttaglist = tagcompound.getTagList("ItemInventory");
+		NBTTagList items = tagcompound.getTagList("ItemInventory");
 
-		for (int i = 0; i < nbttaglist.tagCount(); ++i)
+		for (int i = 0; i < items.tagCount(); ++i)
 		{
-			NBTTagCompound nbttagcompound1 = (NBTTagCompound)nbttaglist.tagAt(i);
-			int b0 = nbttagcompound1.getInteger("Slot");
+			NBTTagCompound item = (NBTTagCompound) items.tagAt(i);
+			int slot = item.getInteger("Slot");
 
 			// Just double-checking that the saved slot index is within our inventory array bounds
-			if (b0 >= 0 && b0 < this.getSizeInventory())
-			{
-				this.setInventorySlotContents(b0, ItemStack.loadItemStackFromNBT(nbttagcompound1));
+			if (slot >= 0 && slot < getSizeInventory()) {
+				inventory[slot] = ItemStack.loadItemStackFromNBT(item);
 			}
 		}
 	}
@@ -299,25 +298,25 @@ public class InventoryItem implements IInventory
 	public void writeToNBT(NBTTagCompound tagcompound)
 	{
 		// Create a new NBT Tag List to store itemstacks as NBT Tags
-		NBTTagList nbttaglist = new NBTTagList();
+		NBTTagList items = new NBTTagList();
 
-		for (int i = 0; i < this.getSizeInventory(); ++i)
+		for (int i = 0; i < getSizeInventory(); ++i)
 		{
 			// Only write stacks that contain items
-			if (this.getStackInSlot(i) != null)
+			if (getStackInSlot(i) != null)
 			{
 				// Make a new NBT Tag Compound to write the itemstack and slot index to
-				NBTTagCompound nbttagcompound1 = new NBTTagCompound();
-				nbttagcompound1.setInteger("Slot", i);
+				NBTTagCompound item = new NBTTagCompound();
+				item.setInteger("Slot", i);
 				// Writes the itemstack in slot(i) to the Tag Compound we just made
-				this.getStackInSlot(i).writeToNBT(nbttagcompound1);
+				getStackInSlot(i).writeToNBT(item);
 
 				// add the tag compound to our tag list
-				nbttaglist.appendTag(nbttagcompound1);
+				items.appendTag(nbttagcompound1);
 			}
 		}
 		// Add the TagList to the ItemStack's Tag Compound with the name "ItemInventory"
-		tagcompound.setTag("ItemInventory", nbttaglist);
+		tagcompound.setTag("ItemInventory", items);
 	}
 }
 /*
