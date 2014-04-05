@@ -54,7 +54,7 @@ public final class InventoryItemMain
 	private static int modItemIndex = 7000;
 
 	/** Set our custom inventory Gui index to the next available Gui index */
-	public static final int ItemInventoryGuiIndex = modGuiIndex++;
+	public static final int GUI_ITEM_INV = modGuiIndex++;
 
 	// ITEMS ETC.
 	public static final Item itemstore = new ItemStore(modItemIndex++).setUnlocalizedName("item_store").setCreativeTab(CreativeTabs.tabMisc);
@@ -89,7 +89,7 @@ public class CommonProxy implements IGuiHandler
 	public Object getServerGuiElement(int guiId, EntityPlayer player, World world, int x, int y, int z)
 	{
 		// Hooray, no 'magic' numbers - we know exactly which Gui this refers to
-		if (guiId == InventoryItemMain.ItemInventoryGuiIndex)
+		if (guiId == InventoryItemMain.GUI_ITEM_INV)
 		{
 			// Use the player's held item to create the inventory
 			return new ContainerItem(player, player.inventory, new InventoryItem(player.getHeldItem()));
@@ -100,7 +100,7 @@ public class CommonProxy implements IGuiHandler
 	@Override
 	public Object getClientGuiElement(int guiId, EntityPlayer player, World world, int x, int y, int z)
 	{
-		if (guiId == InventoryItemMain.ItemInventoryGuiIndex)
+		if (guiId == InventoryItemMain.GUI_ITEM_INV)
 		{
 			// We have to cast the new container as our custom class
 			// and pass in currently held item for the inventory
@@ -144,15 +144,20 @@ public class InventoryItem implements IInventory
 	/**
 	 * @param itemstack - the ItemStack to which this inventory belongs
 	 */
-	public InventoryItem(ItemStack itemstack)
+	public InventoryItem(ItemStack stack)
 	{
-		invItem = itemstack;
+		invItem = stack;
 
 		// Create a new NBT Tag Compound if one doesn't already exist, or you will crash
-		if (!invItem.hasTagCompound()) { invItem.setTagCompound(new NBTTagCompound()); }
+		if (!stack.hasTagCompound()) {
+			stack.setTagCompound(new NBTTagCompound());
+		}
+		// note that it's okay to use stack instead of invItem right there
+		// both reference the same memory location, so whatever you change using
+		// either reference will change in the other
 
 		// Read the inventory contents from NBT
-		readFromNBT(invItem.getTagCompound());
+		readFromNBT(stack.getTagCompound());
 	}
 
 	@Override
@@ -177,7 +182,7 @@ public class InventoryItem implements IInventory
 			{
 				stack = stack.splitStack(amount);
 				// Don't forget this line or your inventory will not be saved!
-				this.onInventoryChanged();
+				onInventoryChanged();
 			}
 			else
 			{
@@ -197,25 +202,27 @@ public class InventoryItem implements IInventory
 	}
 
 	@Override
-	public void setInventorySlotContents(int slot, ItemStack itemstack)
+	public void setInventorySlotContents(int slot, ItemStack stack)
 	{
-		this.inventory[slot] = itemstack;
+		inventory[slot] = itemstack;
 
-		if (itemstack != null && itemstack.stackSize > this.getInventoryStackLimit())
+		if (stack != null && stack.stackSize > getInventoryStackLimit())
 		{
-			itemstack.stackSize = this.getInventoryStackLimit();
+			stack.stackSize = getInventoryStackLimit();
 		}
 
 		// Don't forget this line or your inventory will not be saved!
 		onInventoryChanged();
 	}
 
+	// 1.7.2 renamed to getInventoryName
 	@Override
 	public String getInvName()
 	{
 		return name;
 	}
 
+	// 1.7.2 renamed to hasCustomInventoryName
 	@Override
 	public boolean isInvNameLocalized()
 	{
@@ -233,13 +240,15 @@ public class InventoryItem implements IInventory
 	 * anytime the inventory changes. Perfect. Much better than using onUpdate in an Item, as this will also
 	 * let you change things in your inventory without ever opening a Gui, if you want.
 	 */
+	 // 1.7.2 renamed to markDirty
 	@Override
 	public void onInventoryChanged()
 	{
 		for (int i = 0; i < getSizeInventory(); ++i)
 		{
-			if (getStackInSlot(i) != null && getStackInSlot(i).stackSize == 0)
+			if (getStackInSlot(i) != null && getStackInSlot(i).stackSize == 0) {
 				inventory[i] = null;
+			}
 		}
 		
 		// This line here does the work:		
@@ -252,9 +261,11 @@ public class InventoryItem implements IInventory
 		return true;
 	}
 
+	// 1.7.2 renamed to openInventory
 	@Override
 	public void openChest() {}
 
+	// 1.7.2 renamed to closeInventory
 	@Override
 	public void closeChest() {}
 
@@ -275,13 +286,15 @@ public class InventoryItem implements IInventory
 	/**
 	 * A custom method to read our inventory from an ItemStack's NBT compound
 	 */
-	public void readFromNBT(NBTTagCompound tagcompound)
+	public void readFromNBT(NBTTagCompound compound)
 	{
 		// Gets the custom taglist we wrote to this compound, if any
-		NBTTagList items = tagcompound.getTagList("ItemInventory");
+		// 1.7.2 change to compound.getTagList("ItemInventory", Constants.NBT.TAG_COMPOUND);
+		NBTTagList items = compound.getTagList("ItemInventory");
 
 		for (int i = 0; i < items.tagCount(); ++i)
 		{
+			// 1.7.2 change to items.getCompoundTagAt(i)
 			NBTTagCompound item = (NBTTagCompound) items.tagAt(i);
 			int slot = item.getInteger("Slot");
 
@@ -764,35 +777,34 @@ public class GuiItemInventory extends GuiContainer
 	/**
 	 * This renders the player model in standard inventory position
 	 */
-	public static void drawPlayerModel(int par0, int par1, int par2, float par3, float par4, EntityLivingBase par5EntityLivingBase)
-	{
+	public static void drawPlayerModel(int x, int y, int scale, float yaw, float pitch, EntityLivingBase entity) {
 		GL11.glEnable(GL11.GL_COLOR_MATERIAL);
 		GL11.glPushMatrix();
-		GL11.glTranslatef((float)par0, (float)par1, 50.0F);
-		GL11.glScalef((float)(-par2), (float)par2, (float)par2);
+		GL11.glTranslatef(x, y, 50.0F);
+		GL11.glScalef(-scale, scale, scale);
 		GL11.glRotatef(180.0F, 0.0F, 0.0F, 1.0F);
-		float f2 = par5EntityLivingBase.renderYawOffset;
-		float f3 = par5EntityLivingBase.rotationYaw;
-		float f4 = par5EntityLivingBase.rotationPitch;
-		float f5 = par5EntityLivingBase.prevRotationYawHead;
-		float f6 = par5EntityLivingBase.rotationYawHead;
+		float f2 = entity.renderYawOffset;
+		float f3 = entity.rotationYaw;
+		float f4 = entity.rotationPitch;
+		float f5 = entity.prevRotationYawHead;
+		float f6 = entity.rotationYawHead;
 		GL11.glRotatef(135.0F, 0.0F, 1.0F, 0.0F);
 		RenderHelper.enableStandardItemLighting();
 		GL11.glRotatef(-135.0F, 0.0F, 1.0F, 0.0F);
-		GL11.glRotatef(-((float)Math.atan((double)(par4 / 40.0F))) * 20.0F, 1.0F, 0.0F, 0.0F);
-		par5EntityLivingBase.renderYawOffset = (float)Math.atan((double)(par3 / 40.0F)) * 20.0F;
-		par5EntityLivingBase.rotationYaw = (float)Math.atan((double)(par3 / 40.0F)) * 40.0F;
-		par5EntityLivingBase.rotationPitch = -((float)Math.atan((double)(par4 / 40.0F))) * 20.0F;
-		par5EntityLivingBase.rotationYawHead = par5EntityLivingBase.rotationYaw;
-		par5EntityLivingBase.prevRotationYawHead = par5EntityLivingBase.rotationYaw;
-		GL11.glTranslatef(0.0F, par5EntityLivingBase.yOffset, 0.0F);
+		GL11.glRotatef(-((float) Math.atan(pitch / 40.0F)) * 20.0F, 1.0F, 0.0F, 0.0F);
+		entity.renderYawOffset = (float) Math.atan(yaw / 40.0F) * 20.0F;
+		entity.rotationYaw = (float) Math.atan(yaw / 40.0F) * 40.0F;
+		entity.rotationPitch = -((float) Math.atan(pitch / 40.0F)) * 20.0F;
+		entity.rotationYawHead = entity.rotationYaw;
+		entity.prevRotationYawHead = entity.rotationYaw;
+		GL11.glTranslatef(0.0F, entity.yOffset, 0.0F);
 		RenderManager.instance.playerViewY = 180.0F;
-		RenderManager.instance.renderEntityWithPosYaw(par5EntityLivingBase, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F);
-		par5EntityLivingBase.renderYawOffset = f2;
-		par5EntityLivingBase.rotationYaw = f3;
-		par5EntityLivingBase.rotationPitch = f4;
-		par5EntityLivingBase.prevRotationYawHead = f5;
-		par5EntityLivingBase.rotationYawHead = f6;
+		RenderManager.instance.renderEntityWithPosYaw(entity, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F);
+		entity.renderYawOffset = f2;
+		entity.rotationYaw = f3;
+		entity.rotationPitch = f4;
+		entity.prevRotationYawHead = f5;
+		entity.rotationYawHead = f6;
 		GL11.glPopMatrix();
 		RenderHelper.disableStandardItemLighting();
 		GL11.glDisable(GL12.GL_RESCALE_NORMAL);
@@ -806,7 +818,7 @@ public class GuiItemInventory extends GuiContainer
  * Step 5: Finally, create your custom Item class that will open the Inventory
  */
 /*
-Nice to end on an easy one. The only special thing about this class is it's onUpdate
+Nice to end on an easy one. The item only needs to open the inventory gui.
 method. I named it ItemStore to more clearly distinguish it from the rest of my
 classes. Not very creative, I know, but sufficient for a tutorial.
  */
@@ -816,43 +828,25 @@ public class ItemStore extends Item
 	{
 		super(par1);
 		// ItemStacks that store an NBT Tag Compound are limited to stack size of 1
-		this.maxStackSize = 1;
+		setMaxStackSize(1);
+		// you'll want to set a creative tab as well, so you can get your item
+		setCreativeTab(CreativeTabs.tabMisc);
 	}
-	
-	/*
-	NOTE: If you want to open your gui on right click and your ItemStore, you MUST override
-	getMaxItemUseDuration to return a value of at least 1, otherwise you won't be able to open
-	the Gui. That's just how it works.
-	*/
-	@Override
-	public int getMaxItemUseDuration(ItemStack itemstack)
-	{
-		return 1;
-	}
-	
-	// Choose one of these two methods:
-	// 1. onItemUse - will only open if you click on a tile, not just in the air
-	@Override
-    	public boolean onItemUse(ItemStack itemstack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ)
-    	{
-		if (!world.isRemote)
-		{
-			player.openGui(InventoryItemMain.instance, InventoryItemMain.ItemInventoryGuiIndex, world, (int) player.posX, (int) player.posY, (int) player.posZ);
-		}
-        	return false;
-    	}
     	
-    	// 2. onItemRightClick - opens even if you click in the air, which I personally prefer
     	@Override
 	public ItemStack onItemRightClick(ItemStack itemstack, World world, EntityPlayer player)
 	{
 		if (!world.isRemote)
 		{
 			// If player not sneaking, open the inventory gui
-			if (!player.isSneaking()) player.openGui(InventoryItemMain.instance, InventoryItemMain.ItemInventoryGuiIndex, world, (int) player.posX, (int) player.posY, (int) player.posZ);
+			if (!player.isSneaking()) {
+				player.openGui(InventoryItemMain.instance, InventoryItemMain.GUI_ITEM_INV, world, (int) player.posX, (int) player.posY, (int) player.posZ);
+			}
 			
 			// Otherwise, stealthily place some diamonds in there for a nice surprise next time you open it up :)
-			else new InventoryItem(player.getHeldItem()).setInventorySlotContents(0, new ItemStack(Item.diamond,4));
+			else {
+				new InventoryItem(player.getHeldItem()).setInventorySlotContents(0, new ItemStack(Item.diamond,4));
+			}
 		}
 		
 		return itemstack;
