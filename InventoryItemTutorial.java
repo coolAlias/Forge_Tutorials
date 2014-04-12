@@ -393,8 +393,8 @@ transferStackInSlot, or if your following the original tutorial, then read on.
  */
 public class ContainerItem extends Container
 {
-	/** The Item Inventory for this Container */
-	public final InventoryItem inventory;
+	/** The Item Inventory for this Container, only needed if you want to reference isUseableByPlayer */
+	private final InventoryItem inventory;
 
 	/** Using these will make transferStackInSlot easier to understand and implement
 	 * INV_START is the index of the first slot in the Player's Inventory, so our
@@ -456,7 +456,9 @@ public class ContainerItem extends Container
 	@Override
 	public boolean canInteractWith(EntityPlayer entityplayer)
 	{
-		return true;
+		// be sure to return the inventory's isUseableByPlayer method
+		// if you defined special behavior there:
+		return inventory.isUseableByPlayer(player);
 	}
 
 	/**
@@ -569,6 +571,20 @@ public class ContainerItem extends Container
 		}
 
 		return itemstack;
+	}
+
+	/**
+	 * You should override this method to prevent the player from moving the stack that
+	 * opened the inventory, otherwise if the player moves it, the inventory will not
+	 * be able to save properly
+	 */
+	@Override
+	public ItemStack slotClick(int slot, int button, int flag, EntityPlayer player) {
+		// this will prevent the player from interacting with the item that opened the inventory:
+		if (slot >= 0 && getSlot(slot) != null && getSlot(slot).getStack() == player.getHeldItem()) {
+			return null;
+		}
+		return super.slotClick(slot, button, flag, player);
 	}
 }
 
@@ -689,9 +705,9 @@ Making the custom slot is very simple, if you're going that route:
 */
 public class SlotItemInv extends Slot
 {
-	public SlotItemInv(IInventory par1iInventory, int par2, int par3, int par4)
+	public SlotItemInv(IInventory inv, int index, int xPos, int yPos)
 	{
-		super(par1iInventory, par2, par3, par4);
+		super(inv, index, xPos, yPos);
 	}
 
 	// This is the only method we need to override so that
@@ -832,7 +848,13 @@ public class ItemStore extends Item
 		// you'll want to set a creative tab as well, so you can get your item
 		setCreativeTab(CreativeTabs.tabMisc);
 	}
-    	
+
+	// Without this method, your inventory will NOT work!!!
+	@Override
+	public int getMaxItemUseDuration(ItemStack stack) {
+		return 1; // return any value greater than zero
+	}
+   
     	@Override
 	public ItemStack onItemRightClick(ItemStack itemstack, World world, EntityPlayer player)
 	{
