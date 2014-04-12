@@ -18,7 +18,7 @@ channels = {ModInfo.CHANNEL}, packetHanlder = ALPacketHandler.class)
 public final class ArcaneLegacy
 {
   @Instance(ModInfo.ID)
-  public static ArcaneLegacy instance = new ArcaneLegacy();
+  public static ArcaneLegacy instance;
 
   // rest of main class here
 
