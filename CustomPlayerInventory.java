@@ -706,13 +706,16 @@ public class TutKeyHandler extends KeyHandler
 }
 
 // IMPORTANT!!!
-// Now that it's all set up, don't forget to register your KeyBindings!!! TutKeyHandler will be registered automatically
-// when you initialize RegisterKeyBindings.
+// Now that it's all set up, don't forget to register your KeyHandler!!!
+// Register KeyHandler in your client proxy, since it is client side only:
+public class ClientProxy extends CommonProxy {
 
-// Register your KeyHandler directly in your ClientProxy so you don't have to check if you are
-// client side first, otherwise you need to check like so:
-if (FMLCommonHandler.instance().getEffectiveSide().isClient()) {
-	TutKeyHandler.init();
+	@Override
+	public void registerRenderers() {
+		// feel free to create a separate method, such as init() or whatever, if you do not want to lump
+		// key bindings and other stuff together with all the render registration code
+		TutKeyHandler.init();
+	}
 }
 
 /**
