@@ -55,10 +55,10 @@ IInventory before, you probably won't see anything new here. It's a very basic s
 */
 public class InventoryCustomPlayer implements IInventory
 {
-	/** The name for your custom inventory, possibly just "Inventory" */
+	/** The name your custom inventory will display in the GUI, possibly just "Inventory" */
 	private final String name = "Custom Inventory";
 
-	/** In case your inventory name is too generic, define a name to store the NBT tag in as well */
+	/** The key used to store and retrieve the inventory from NBT */
 	private final String tagName = "CustomInvTag";
 
 	/** Define the inventory size here for easy reference */
@@ -67,7 +67,7 @@ public class InventoryCustomPlayer implements IInventory
 	public static final int INV_SIZE = 2;
 
 	/** Inventory's size must be same as number of slots you add to the Container class */
-	ItemStack[] inventory = new ItemStack[INV_SIZE];
+	private ItemStack[] inventory = new ItemStack[INV_SIZE];
 
 	public InventoryCustomPlayer()
 	{
@@ -150,10 +150,11 @@ public class InventoryCustomPlayer implements IInventory
 	@Override
 	public void onInventoryChanged()
 	{
-		for (int i = 0; i < this.getSizeInventory(); ++i)
+		for (int i = 0; i < getSizeInventory(); ++i)
 		{
-			if (this.getStackInSlot(i) != null && this.getStackInSlot(i).stackSize == 0)
-				this.setInventorySlotContents(i, null);
+			if (getStackInSlot(i) != null && getStackInSlot(i).stackSize == 0) {
+				inventory[i] = null;
+			}
 		}
 	}
 
@@ -214,7 +215,7 @@ public class InventoryCustomPlayer implements IInventory
 			byte slot = item.getByte("Slot");
 
 			if (slot >= 0 && slot < getSizeInventory()) {
-				setInventorySlotContents(slot, ItemStack.loadItemStackFromNBT(item));
+				inventory[slot] = ItemStack.loadItemStackFromNBT(item);
 			}
 		}
 	}
@@ -240,9 +241,7 @@ public class ContainerCustomPlayer extends Container
 			INV_START = ARMOR_END+1, INV_END = INV_START+26, HOTBAR_START = INV_END+1,
 			HOTBAR_END = HOTBAR_START+8;
 
-	public ContainerCustomPlayer(EntityPlayer player, InventoryPlayer inventoryPlayer, InventoryCustomPlayer 
-
-			inventoryCustom)
+	public ContainerCustomPlayer(EntityPlayer player, InventoryPlayer inventoryPlayer, InventoryCustomPlayer inventoryCustom)
 	{
 		int i;
 
@@ -378,9 +377,9 @@ Here, I will only show a single custom Slot for ItemUseMana and the SlotArmor cl
 // Custom Slot:
 public class SlotCustom extends Slot
 {
-	public SlotCustom(IInventory inventory, int par2, int par3, int par4)
+	public SlotCustom(IInventory inventory, int slotIndex, int x, int y)
 	{
-		super(inventory, par2, par3, par4);
+		super(inventory, slotIndex, x, y);
 	}
 
 	/**
@@ -388,10 +387,10 @@ public class SlotCustom extends Slot
 	 * (and now also not always true for our custom inventory slots)
 	 */
 	@Override
-	public boolean isItemValid(ItemStack itemstack)
+	public boolean isItemValid(ItemStack stack)
 	{
 		// We only want our custom item to be storable in this slot
-		return itemstack.getItem() instanceof ItemUseMana;
+		return stack.getItem() instanceof ItemUseMana;
 	}
 }
 // Armor Slot:
@@ -403,11 +402,11 @@ public class SlotArmor extends Slot
 	/** The parent class of this slot, ContainerPlayer, SlotArmor is a Anon inner class. */
 	final EntityPlayer player;
 
-	public SlotArmor(EntityPlayer player, IInventory inventory, int par3, int par4, int par5, int par6)
+	public SlotArmor(EntityPlayer player, IInventory inventory, int slotIndex, int x, int y, int armorType)
 	{
-		super(inventory, par3, par4, par5);
+		super(inventory, slotIndex, x, y);
 		this.player = player;
-		this.armorType = par6;
+		this.armorType = armorType;
 	}
 
 	/**
@@ -455,9 +454,7 @@ public class GuiCustomPlayerInventory extends GuiContainer
 	private float ySize_lo;
 
 	/** Normally I use '(ModInfo.MOD_ID, "textures/...")', but it can be done this way as well */
-	private static final ResourceLocation iconLocation = new ResourceLocation
-
-			("tutorial:textures/gui/custom_inventory.png");
+	private static final ResourceLocation iconLocation = new ResourceLocation("tutorial:textures/gui/custom_inventory.png");
 
 	/** Could use IInventory type to be more generic, but this way will save an import... */
 	private final InventoryCustomPlayer inventory;
@@ -594,19 +591,21 @@ public static final int GUI_CUSTOM_INV = modGuiIndex++;
 @Override
 public Object getServerGuiElement(int guiId, EntityPlayer player, World world, int x, int y, int z)
 {
-	if (guiId == TutorialMain.GUI_CUSTOM_INV) 
+	if (guiId == TutorialMain.GUI_CUSTOM_INV) {
 		return new ContainerCustomPlayer(player, player.inventory, ExtendedPlayer.get(player).inventory);
-	else
+	} else {
 		return null;
+	}
 }
 
 @Override
 public Object getClientGuiElement(int guiId, EntityPlayer player, World world, int x, int y, int z)
 {
-	if (guiId == TutorialMain.GUI_CUSTOM_INV)
+	if (guiId == TutorialMain.GUI_CUSTOM_INV) {
 		return new GuiCustomPlayerInventory(player, player.inventory, ExtendedPlayer.get(player).inventory);
-	else
+	} else {
 		return null;
+	}
 }
 /**
  * Step 4.2: Finishing Up - Setting up a KeyHandler
@@ -621,6 +620,19 @@ Don't forget to register your KeyHandler in your main mod, but only on the clien
 // RegisterKeyBinding class
 public class RegisterKeyBindings
 {
+	
+}
+
+// TutKeyHandler class
+@SideOnly(Side.CLIENT)
+public class TutKeyHandler extends KeyHandler
+{
+	/** Store Minecraft so we don't have to get it each time */
+	private final Minecraft mc;
+
+	/** Not really important. I use it to store/find keys in the config file */
+	public static final String label = "Tutorial Key";
+
 	/** Key index for easy handling */
 	public static final int CUSTOM_INV = 0;
 
@@ -630,39 +642,27 @@ public class RegisterKeyBindings
 	/** Default key values */
 	private static final int[] keyValues = {Keyboard.KEY_O};
 
-	/** Maps Keyboard values to Tutorial KeyBinding index values (e.g. CUSTOM_INV returns KEY_O) */
-	public static final Map<Integer, Integer> tutKeyMap = new HashMap<Integer, Integer>();
+	/** Stores custom keybindings for easy reference */
+	public static final KeyBinding[] keys = new KeyBinding[desc.length];
 
 	/**
-	 * This will initialize all key bindings; I like to pass in a Configuration object, but
-	 * I won't be showing that here. Check the tutorial provided in the prerequisites section
-	 * for more advanced KeyBinding methods, specifically my posts therein.
+	 * This will initialize all key bindings and create a new key handler; you can
+	 * pass in a Configuration file if you want to read default key values from
+	 * your config, but the settings can be changed in game, too.
 	 */
-	public static void init()
-	{
-		KeyBinding[] key = new KeyBinding[desc.length];
+	public static void init() {
 		boolean[] repeat = new boolean[desc.length];
-
-		for (int i = 0; i < desc.length; ++i)
-		{
-			key[i] = new KeyBinding(desc[i], keyValues[i]);
+		for (int i = 0; i < desc.length; ++i) {
+			keys[i] = new KeyBinding(desc[i], keyValues[i]);
 			repeat[i] = false;
-			tutKeyMap.put(key[i].keyCode, i);
 		}
 
 		KeyBindingRegistry.registerKeyBinding(new TutKeyHandler(key, repeat));
 	}
-}
 
-// TutKeyHandler class
-@SideOnly(Side.CLIENT)
-public class TutKeyHandler extends KeyHandler
-{
-	/** Not really important. I use it to store/find keys in the config file */
-	public static final String label = "Tutorial Key";
-
-	public TutKeyHandler(KeyBinding[] keyBindings, boolean[] repeatings) {
+	private TutKeyHandler(KeyBinding[] keyBindings, boolean[] repeatings) {
 		super(keyBindings, repeatings);
+		this.mc = Minecraft.getMinecraft();
 	}
 
 	@Override
@@ -673,25 +673,22 @@ public class TutKeyHandler extends KeyHandler
 	@Override
 	public void keyDown(EnumSet<TickType> types, KeyBinding kb, boolean tickEnd, boolean isRepeat)
 	{
-		if (tickEnd && RegisterKeyBindings.tutKeyMap.containsKey(kb.keyCode))
+		if (tickEnd)
 		{
-			EntityPlayer player = FMLClientHandler.instance().getClient().thePlayer;
-
-			switch(RegisterKeyBindings.tutKeyMap.get(kb.keyCode)) {
-			case RegisterKeyBindings.CUSTOM_INV:
-				// If the custom inventory screen is open, close it
-				if (player.openContainer != null && player.openContainer instanceof ContainerCustomPlayer)
-					player.closeScreen();
-
-				// Otherwise, open the screen. Here you will need to send a packet to the server telling it
-				// to open the corresponding server gui element, or your inventory won't function
-				else if (FMLClientHandler.instance().getClient().inGameHasFocus) {
+			// if you don't want the key firing while in chat or a gui is open, check if the game is in focus:
+			if (mc.inGameHasFocus) {
+				if (kb == keys[CUSTOM_INV]) {
 					// Send a packet to the server using a method we'll create in the next step
 					TutorialPacketHandler.sendOpenGuiPacket(TutorialMain.GUI_CUSTOM_INV);
 					// opening the gui server side automatically opens the client side as well,
 					// so we don't need to do anything else
 				}
-				break;
+			} else {
+				// a gui is open; in 1.6.4 and earlier, you can close the GUI from here:
+				if (kb == keys[CUSTOM_INV] && player.openContainer instanceof ContainerCustomPlayer) {
+					// in 1.7.2, you need to do this from your custom GUI class instead
+					player.closeScreen();
+				}
 			}
 		}
 	}
@@ -712,9 +709,11 @@ public class TutKeyHandler extends KeyHandler
 // Now that it's all set up, don't forget to register your KeyBindings!!! TutKeyHandler will be registered automatically
 // when you initialize RegisterKeyBindings.
 
-// Register KeyHandler in one of the load/post-init methods of your main mod:
-if (FMLCommonHandler.instance().getEffectiveSide().isClient())
-	RegisterKeyBindings.init();
+// Register your KeyHandler directly in your ClientProxy so you don't have to check if you are
+// client side first, otherwise you need to check like so:
+if (FMLCommonHandler.instance().getEffectiveSide().isClient()) {
+	TutKeyHandler.init();
+}
 
 /**
  * Step 4.3: Finishing Up - Handling your Packet
