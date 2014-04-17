@@ -2,6 +2,9 @@
  * Rendering a Custom Item Texture
  */
 /*
+In this tutorial, we will make a custom, Item-based projectile, a throwing rock. It covers all the steps
+necessary to add any projectile entity into the game, including how to get it to render on the screen properly.
+
 For this tutorial, we're going to make a new item ThrowingRock and get it to render
 a custom texture when thrown. We'll assume you've got your main mod space set up.
 If not, I HIGHLY suggest you go over to TechGuy543's tutorial at
@@ -20,50 +23,48 @@ but we're going to make it extend another class, BaseModItem, which extends Item
 The magic of inheritance will allow our ThrowingRock to extend Item through
 BaseModItem. Here is BaseModItem's code.
 */
-package your.mod.package.here;
-import your.mod.name.here;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.client.renderer.texture.IconRegister;
-import net.minecraft.item.Item;
-import net.minecraft.util.Icon;
 public class BaseModItem extends Item
 {
-	public BaseModItem(int par1)
-	{
-		super(par1);
+	// no more IDs
+	public BaseModItem() {
+		super();
 	}
 
-	@SideOnly(Side.CLIENT)
+	// IconRegister renamed to IIconRegister
 	@Override
-	public void registerIcons(IconRegister iconRegister)//updateIcons
-	{
-		this.itemIcon = iconRegister.registerIcon("yourmodid:" + this.getUnlocalizedName().substring(5));
-		System.out.println("[YOUR MOD] Registering Icon: yourmodid:" + this.getUnlocalizedName().substring(5);
+	@SideOnly(Side.CLIENT)
+	public void registerIcons(IIconRegister iconRegister) {
+		itemIcon = iconRegister.registerIcon("tutorial:" + getUnlocalizedName().substring(5).toLowerCase());
 	}
 }
 /*
 This allows us to avoid re-writing the registerIcon function in every single new
 item we make. Nifty. Now here's what ItemThrowingRock will look like.
  */
-package your.mod.package.here;
-import net.minecraft.creativetab.CreativeTabs;
-
 public class ItemThrowingRock extends BaseModItem
 {
-	public ItemThrowingRock(int par1)
+	// no more ID parameter
+	public ItemThrowingRock()
 	{
-		super(par1);
-		this.maxStackSize = 18;
-		this.setCreativeTab(CreativeTabs.tabCombat);
+		super();
+		// we'll set the max stack size and creative tab from here:
+		setMaxStackSize(18);
+		setCreativeTab(CreativeTabs.tabCombat);
 	}
 }
 /*
-We set the maxStackSize and CreativeTab in the constructor here, but you could also
+We set the maxStackSize and CreativeTab in the constructor above, but you could also
 do it when you declare the item in your main mod instance:
 */
 
-public static final Item throwingRock = new ItemThrowingRock(5030).setUnlocalizedName("throwingRock").setMaxStackSize(64).setCreativeTab(CreativeTabs.tabCombat);
+public static Item throwingRock;
+
+// ALL Blocks, Items, etc. must be initialized during FML Pre-Initialization Event
+@EventHandler
+public void preInit(FMLPreInitializationEvent event) {
+	throwingRock = new ItemThrowingRock().setUnlocalizedName("throwingRock").
+		setMaxStackSize(18).setCreativeTab(CreativeTabs.tabCombat);
+}
 
 /*
 So far our ThrowingRock doesn't do anything. We want this class to throw rocks, much
@@ -82,6 +83,8 @@ public ItemStack onItemRightClick(ItemStack itemstack, World world, EntityPlayer
 
 	world.playSoundAtEntity(player, "random.bow", 0.5F, 0.4F / (itemRand.nextFloat() * 0.4F + 0.8F));
 
+	// IMPORTANT! Only spawn new entities on the server. If the world is not remote,
+	// that means you are on the server:
 	if (!world.isRemote)
 	{
 		world.spawnEntityInWorld(new EntitySnowball(world, player));
@@ -99,14 +102,6 @@ we'll fix that in step 2.
  * Step 2: Creating a custom Entity: EntityThrowingRock
  */
 // Ok, we want our ThrowingRock to behave similarly to snowballs, so let's look at that class.
-package net.minecraft.entity.projectile;
-
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.monster.EntityBlaze;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.world.World;
-
 public class EntitySnowball extends EntityThrowable
 {
 	public EntitySnowball(World par1World)
@@ -157,12 +152,6 @@ Tweak 3: Our rock spawns snowballpoofs on impact. Lame. Just change "snowballpoo
 
 Here's what our new EntityThrowingRock code looks like:
 */
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.projectile.EntityThrowable;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.world.World;
-
 public class EntityThrowingRock extends EntityThrowable
 {
 	public EntityThrowingRock(World par1World)
@@ -201,10 +190,11 @@ public class EntityThrowingRock extends EntityThrowable
 	}
 }
 /*
-Note the "@Override" before our onImpact function - it's not critical here, as
-EntityThrowable.onImpact() doesn't have anything in it, but it's good practice
-to put this here if you're using the same name as one of the parent functions to
-ensure your method is the one called.
+Note the "@Override" before our onImpact function - it's not critical here, as EntityThrowable.onImpact()
+doesn't have anything in it, but it's good practice to put this here; if the method name or signature ever
+changes in a Minecraft update, you will know immediately because your old method will give you an error.
+This means you need to find the new method signature and change your method name - simply removing @Override
+will get rid of the error, too, but then your method will never be called!
 */
 
 /**
@@ -215,14 +205,17 @@ We've set up our custom Entity class, but Minecraft doesn't know about it yet. S
 EntityRegistry.registerModEntity in our main mod load method and tell it what renderer to use using
 RenderingRegistry.registerEntityRenderingHandler in our ClientProxy. Here's how:
  */
-// First in your main mod class:
-// I like using an incrementable index to set my IDs rather than writing 1, 2, 3, etc., so I never have
-// to worry about order or if I missed a number (doesn't really matter though)
-private static int modEntityID = 0;
-
 @EventHandler
-public void load(FMLInitializationEvent event)
+public void preInit(FMLPreInitializationEvent event)
 {
+	// Config, Blocks, Items go here:
+	throwingRock = new ItemThrowingRock().setUnlocalizedName("throwingRock");
+	
+	
+	// I like using an incrementable index to set my IDs rather than writing 1, 2, 3, etc., so I never have
+	// to worry about order or if I missed a number (doesn't really matter though)
+	int modEntityID = 0;
+
 	// If you have a lot of Entities to register, consider creating a class with a static 'initEntity' method
 	// so your main class stays tidy and readable
 	EntityRegistry.registerModEntity(EntityThrowingRock.class, "Throwing Rock", ++modEntityID, this, 64, 10, true);
@@ -261,33 +254,7 @@ Your custom entity should now render correctly in the world! Congratulations!
 */
 
 /**
- * Step 3.1: A Note about ResourceLocation
- */
-/*
-Although you most likely won't be using these for rendering thrown entities, I think this deserves mention.
-For Minecraft 1.6.2, textures are no longer bound, but set using Resource Location. If you are rendering anything
-that doesn't use an Item Icon, you will need to use this to get your custom texture showing up.
-
-ResourceLocation takes 2 parameters: ModId and the path to your texture at the location:
-"src/minecraft/assets/modid/"
-
-You can also set it with a single parameter, the string of the path to the texture:
-"mymodid:textures/entity/mytexture.png" or (mymodid + ":textures/entity/mytexture.png").
-*/
-ResourceLocation iconLocation = new ResourceLocation("yourmodname", "textures/entity/yourtexture.png");
-
-// For Tile Entity Special Renders, the resource location is 'bound' using this code:
-// this.func_110628_a(iconLocation); // Forge 804
-// now (Forge 871) uses bindTexture:
-this.bindTexture(iconLocation);
-
-// For Gui's, the resource location is 'bound' using this code:
-// this.mc.func_110434_K().func_110577_a(iconLocation); // Forge 804
-// As of Forge 871 at the latest, you can use renderEngine and bindTexture:
-this.mc.renderEngine.bindTexture(iconLocation)
-
-/**
- * Step 4: Creating a custom Render, e.g. RenderThrowingRock
+ * Step 4: Rendering: The Power of Inheritance
  */
 /*
 Okay, so you've got everything working correctly, but you want your Item to exhibit
@@ -374,24 +341,119 @@ public class RenderThrowingRock extends Render
 		par1Tessellator.draw();
 	}
 }
-/*
-Pure copy-paste. Genius. Be sure to import everything necessary.
 
-Now, in our ClientProxy, we need to change the Render class to which you registered
-your item:
+/**
+Pure copy-paste. Genius. Be sure to import everything necessary. But now I'll let you in on an even BETTER way,
+that you should use whenever you can: make a new class that EXTENDS whatever class you want to emulate, rather
+than copying and pasting:
+ */
+@SideOnly(Side.CLIENT)
+public class RenderThrowingRock extends RenderSnowball
+{
+	public RenderThrowingRock(Item item) {
+		this(item, 0);
+	}
+	
+	public RenderThrowingRock(Item item, int par2) {
+		super(item, par2);
+	}
+	
+	// now you can override the render methods if you want
+	// call super to get the original functionality, and/or add some stuff of your own
+	// I'll leave that up to you to experiment with
+}
+/**
+Wow, that's so much simpler. You barely have to do anything. Remember that for the future. Of course you don't
+really have to even create a Render class for the throwing rock, as you can just pass the Item directly to
+RenderSnowball when you register, but you can use this technique in many places, overriding methods to add new
+functionality while getting the benefits of the old.
+ */
 
-// Change this:
+// Now, in our ClientProxy, we need to change this:
 RenderingRegistry.registerEntityRenderingHandler(EntityThrowingRock.class, new RenderSnowball(YourModName.throwingRock));
+
 // to this:
 RenderingRegistry.registerEntityRenderingHandler(EntityThrowingRock.class, new RenderThrowingRock(YourModName.throwingRock));
 
-Now all you need to do is play around with the variables and see what you can get it to do. Keep in mind this step
-is ONLY necessary IF you want rendering behavior different from vanilla, otherwise save yourself lots of time and
-just use RenderSnowball with your Item as the parameter, like in Step 3.
-*/
+// Or, if not using a custom render, use RenderSnowball with your Item as the parameter:
+RenderingRegistry.registerEntityRenderingHandler(EntityThrowingRock.class, new RenderSnowball(YourModName.throwingRock));
 
 /**
- * Step 5: HELP!!! A.k.a Common Problems and Troubleshooting.
+ * Step 5: Rendering a Model
+ */
+/*
+If you want to do some different rendering than that offered by RenderSnowball, for example if you want a model,
+you will need to create a new class that extends Render, or one of Render's subclasses.
+
+You will need a ResourceLocation for your texture; this takes 2 parameters: ModId and the path to your texture at
+the location: "src/minecraft/assets/modid/"
+
+You can also set it with a single parameter, the string of the path to the texture:
+"mymodid:textures/entity/mytexture.png" or (mymodid + ":textures/entity/mytexture.png").
+
+In any class that extends Render, or TileEntitySpecialRenderer, you can bind the texture simply by using
+"this.bindTexture(yourResourceLocation);"
+
+On to the class itself:
+*/
+@SideOnly(Side.CLIENT)
+public class RenderCustomEntity extends Render
+{
+	// ResourceLocations are typically static and final, but that is not an absolute requirement
+	private static final ResourceLocation texture = new ResourceLocation("yourmodid", "textures/entity/yourtexture.png");
+	
+	// if you want a model, be sure to add it here:
+	private ModelBase model;
+	
+	public RenderCustomEntity() {
+			// we could have initialized it above, but here is fine as well:
+	model = new ModelCustomEntity();
+	}
+	
+	@Override
+	protected ResourceLocation getEntityTexture(Entity entity) {
+		// this method should return your texture, which may be different based
+		// on certain characteristics of your custom entity; if that is the case,
+		// you may want to make a second method that takes your class:
+		return getCustomTexture((CustomEntity) entity);
+	}
+	
+	private ResourceLocation getCustomTexture(CustomEntity entity) {
+		// now you have access to your custom entity fields and methods, if any,
+		// and can base the texture to return upon those
+		return texture;
+	}
+	
+	// in whatever render method you are using; this one is from Render class:
+	@Override
+	public void doRender(Entity entity, double x, double y, double z, float yaw, float partialTick) {
+		// again, if you need some information from your custom entity class, you can cast to your
+		// custom class, either passing off to another method, or just doing it here
+		// in this example, it is not necessary
+		
+		// if you are going to do any openGL matrix transformations, be sure to always Push and Pop
+		GL11.glPushMatrix();
+		
+		// bind your texture:
+		bindTexture(texture);
+		
+		// do whatever transformations you need, then render
+		
+		// typically you will at least want to translate for x/y/z position:
+		GL11.glTranslated(x, y, z);
+		
+		// if you are using a model, you can do so like this:
+		model.render(entity, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0625F);
+		
+		// note all the values are 0 except the final argument, which is scale
+		// vanilla Minecraft almost excusively uses 0.0625F, but you can change it to whatever works
+		
+		GL11.glPopMatrix();
+	}
+}
+
+/**
+ * Step 6: HELP!!! A.k.a Common Problems and Troubleshooting.
  */
 /*
 First, please read ALL sections of the above tutorial carefully. Then see if you have done all of the below:
