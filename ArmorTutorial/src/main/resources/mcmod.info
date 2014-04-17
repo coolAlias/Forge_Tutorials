@@ -1,0 +1,16 @@
+[
+{
+  "modid": "armortutorial",
+  "name": "Armor Tutorial",
+  "description": "Learn how to add armors in an OOP-friendly manner, as well as how to add an armor with a new model",
+  "version": "1.0",
+  "mcversion": "1.6.4 and 1.7.2",
+  "url": "",
+  "updateUrl": "",
+  "authors": ["coolAlias"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
