@@ -607,7 +607,7 @@ in the game. As a bonus, it's only called once per entity, so you're not spammin
 @ForgeSubscribe
 public void onEntityJoinWorld(EntityJoinWorldEvent event)
 {
-	//Only need to synchronize when the world is remote (i.e. we're on the server side)
+	//Only need to synchronize when the world is NOT remote (i.e. we're on the server side)
 	// and only for player entities, as that's what we need for the GuiManaBar
 	if (!event.entity.worldObj.isRemote && event.entity instanceof EntityPlayer)
 		ExtendedPlayer.get((EntityPlayer) event.entity).sync();
