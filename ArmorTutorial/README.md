@@ -1,5 +1,5 @@
-After seeing quite a few mods that have 20+ classes for armor, basically one class for one piece of armor,
-I decided to write it was time to write a tutorial on how to code in an Object-Oriented Programming-friendly
+After seeing quite a few mods that have 20+ classes for armor, basically a whole new class for every single piece
+of armor, I decided it was time to write a tutorial on how to code in an Object-Oriented Programming-friendly
 fashion, and put together this demo armor mod.
 
 I have used this exact code to add dozens of new armors to the game, using several custom and vanilla armor
