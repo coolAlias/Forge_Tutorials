@@ -921,7 +921,7 @@ Thanks again to Seigneur_Necron for these great tips!
 
 And that's how it's done, folks. Happy modding. :D
 */
-
+/*
 NOTES: Updating from 1.7.2 to 1.7.10
 Use SimpleNetworkWrapper instead of the PacketPipeline; see http://www.minecraftforum.net/forums/mapping-and-modding/mapping-and-modding-tutorials/2137055
 
