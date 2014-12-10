@@ -11,13 +11,13 @@ https://github.com/coolAlias/ZeldaSwordSkills-1.6.4/releases
 
 Step 1: Installing the API
 
-1. Assuming you already have your workspace set up, create a new folder named "/lib" in your project directory. That's the directory that contains your /bin, /build, /gradle, and /src folders, and now also has a /lib folder.
+1. Assuming you already have your workspace set up, create a new folder named "/libs" in your project directory. That's the directory that contains your /bin, /build, /gradle, and /src folders, and now also has a /libs folder.
 
-2. Ask the mod author(s) for a binary distributable / source file of their mod and place it in the /lib folder you just created.
+2. Ask the mod author(s) for a binary distributable / source file of their mod and place it in the /libs folder you just created.
 
-3. In Eclipse, right-click on your project, select "Build Path" and then "Configure Build Path". Click the "Libraries" tab, then "Add External JARs" and find the binary file that you just placed in the /lib folder.
+3. In Eclipse, right-click on your project, select "Build Path" and then "Configure Build Path". Click the "Libraries" tab, then "Add External JARs" and find the binary file that you just placed in the /libs folder.
 
-4. If the API author provided a source file, open the "Referenced Libraries" tree in your package explorer, find the API binary that you just referenced and right-click on it; go to "Properties" -> "External location" -> "External file" and navigate to wherever you stored the source file, preferably right next to the binary in the /lib folder.
+4. If the API author provided a source file, open the "Referenced Libraries" tree in your package explorer, find the API binary that you just referenced and right-click on it; go to "Properties" -> "External location" -> "External file" and navigate to wherever you stored the source file, preferably right next to the binary in the /libs folder.
 
 5. Run your debug configuration and see if everything is still working; if so, great! If not, you may need to run setupDev and setupDecomp workspace one more time:
 
@@ -182,7 +182,7 @@ The final step is of course building the mod. Since our mod is dependent upon an
 
 To do so, simply add any dependencies to a "compile files()" method in the build.gradle file, using the full path relative to your project directory and separating each file path with a comma. Note that you can use "../" to move up a folder if, for example, you have a dependency in the working directory instead of the project directory.
 
-"lib/zeldaswordskills-1.6.4-0.6.3.jar" -> located in /workingDirectory/projectDirectory/lib/
+"libs/zeldaswordskills-1.6.4-0.6.3.jar" -> located in /workingDirectory/projectDirectory/libs/
 
 "../run/mods/zeldaswordskills-1.6.4-0.6.3.jar" -> located in /workingDirectory/run/mods/
 
@@ -193,7 +193,7 @@ archivesBaseName = "modwithapi"
 
 dependencies {
 	compile files (
-		"lib/zeldaswordskills-1.6.4-0.6.3.jar"
+		"libs/zeldaswordskills-1.6.4-0.6.3.jar"
 	)
 }
 [/code]
