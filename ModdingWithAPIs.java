@@ -115,13 +115,13 @@ first we will damage the stack by 1 so that it will eventually break. Now our me
 
 @Override
 public BlockWeight getLiftStrength(EntityPlayer player, ItemStack stack, Block block, int meta) {
-return BlockWeight.EXTREME_II;
+	return BlockWeight.EXTREME_II;
 }
 
 @Override
 public ItemStack onLiftBlock(EntityPlayer player, ItemStack stack, Block block, int meta) {
-stack.damageItem(1, player);
-return stack;
+	stack.damageItem(1, player);
+	return stack;
 }
 
 /*
@@ -152,6 +152,8 @@ Add the annotation above the class declaration:
 
 @Optional.Interface(iface="zeldaswordskills.api.item.ILiftBlock", modid="zeldaswordskills", striprefs=true)
 public class ItemLifter extends Item implements ILiftBlock {
+	// your class goes here
+}
 
 /*
 Make sure you import "cpw.mods.fml.common.Optional" and not the google Optional class.
@@ -165,7 +167,7 @@ the API method in question is not part of an interface that you are stripping.
 @Method(modid="zeldaswordskills")
 @Override
 public BlockWeight getLiftStrength(EntityPlayer player, ItemStack stack, Block block, int meta) {
-return BlockWeight.EXTREME_II;
+	return BlockWeight.EXTREME_II;
 }
 
 /*
@@ -214,7 +216,7 @@ simply to check if the mod is loaded:
 */
 
 if (Loader.isModLoaded("api_modid")) {
-// do something with the API
+	// do something with the API
 }
 
 // If I need to access this frequently, I typically store the mod loaded state during pre-initialization:
@@ -222,11 +224,11 @@ public static boolean isWhateverApiLoaded;
 
 @EventHandler
 public void preInit(FMLPreInitializationEvent event) {
-isWhateverApiLoaded = Loader.isModLoaded("whateverAPI");
-// note that this only means that the mod has been recognized, not necessarily that it is fully
-// initialized and ready to go yet; you should NOT try to use anything to do with the API
-// until the FMLInitializationEvent at the earliest, even with dependency information sorting
-// the load order, just to be safe
+	isWhateverApiLoaded = Loader.isModLoaded("whateverAPI");
+	// note that this only means that the mod has been recognized, not necessarily that it is fully
+	// initialized and ready to go yet; you should NOT try to use anything to do with the API
+	// until the FMLInitializationEvent at the earliest, even with dependency information sorting
+	// the load order, just to be safe
 }
 
 /*
@@ -242,19 +244,26 @@ package zeldaswordskills.api;
 import cpw.mods.fml.common.API;
 
 /*
-There should be one of these files in every package that provides API features; if not, you will need to contact the API author and ask them to provide these files, or your mod is quite likely to crash if not for you, then for the majority of people using your mod. Remember, these markers are ONLY needed if you require the API during pre-initialization, such as for implementing specific interfaces in your Items or Blocks, so don't trouble the author if the API does not truly require them.
+There should be one of these files in every package that provides API features; if not, you will need to contact the
+API author and ask them to provide these files, or your mod is quite likely to crash if not for you, then for the
+majority of people using your mod. Remember, these markers are ONLY needed if you require the API during pre-initialization,
+such as for implementing specific interfaces in your Items or Blocks, so don't trouble the author if the API does not
+truly require them.
 
 Step 5: Building the Mod
 
-The final step is of course building the mod. Since our mod is dependent upon an API, we need to let the compiler know where to find that code during the build process or we will get lots of Class Not Found and similar errors.
+The final step is of course building the mod. Since our mod is dependent upon an API, we need to let the compiler
+know where to find that code during the build process or we will get lots of Class Not Found and similar errors.
 
-To do so, simply add any dependencies to a "compile files()" method in the build.gradle file, using the full path relative to your project directory and separating each file path with a comma. Note that you can use "../" to move up a folder if, for example, you have a dependency in the working directory instead of the project directory.
+To do so, simply add any dependencies to a "compile files()" method in the build.gradle file, using the full path
+relative to your project directory and separating each file path with a comma. Note that you can use "../" to move
+up a folder if, for example, you have a dependency in the working directory instead of the project directory.
 
 "libs/zeldaswordskills-1.6.4-0.6.3.jar" -> located in /workingDirectory/projectDirectory/libs/
 
 "../run/mods/zeldaswordskills-1.6.4-0.6.3.jar" -> located in /workingDirectory/run/mods/
+*/
 
-[code]
 version = "1.0"
 group= "com.google.coolalias008.modwithapi"
 archivesBaseName = "modwithapi"
@@ -264,62 +273,83 @@ dependencies {
 		"libs/zeldaswordskills-1.6.4-0.6.3.jar"
 	)
 }
-[/code]
 
-Once the build file is saved, open up a command console and run "gradlew build"; it should compile with no errors, but if it doesn't, double-check the file paths and make sure nothing is misspelled.
+/*
+Once the build file is saved, open up a command console and run "gradlew build"; it should compile with no errors,
+but if it doesn't, double-check the file paths and make sure nothing is misspelled.
 
-Time to load it up in Minecraft and give it a go! Try first with just your mod alone and make sure that is working, then exit the Minecraft launcher completely (just to be safe), add the API-providing mod to your /mods folder, and launch once more. If you followed the tutorial and are using my ZeldaAPI, you should now have an item that can pick up any solid block, just by implementing a single interface! Pretty awesome.
-
+Time to load it up in Minecraft and give it a go! Try first with just your mod alone and make sure that is working,
+then exit the Minecraft launcher completely (just to be safe), add the API-providing mod to your /mods folder, and
+launch once more. If you followed the tutorial and are using my ZeldaAPI, you should now have an item that can pick
+up any solid block, just by implementing a single interface! Pretty awesome.
+*/
+/*
 Step 6: Multiple Interfaces
 
-Alright, you can do a single interface, but what about when you want to implement several API interfaces in a single item, block, or other class? You cannot simply stack @Optionals on top of each other, but you can use an InterfaceList:
-[code]
+Alright, you can do a single interface, but what about when you want to implement several API interfaces in a single
+item, block, or other class? You cannot simply stack @Optionals on top of each other, but you can use an InterfaceList:
+*/
+
 @Optional.InterfaceList(value={
 	@Optional.Interface(iface="zeldaswordskills.api.block.ILiftable", modid="zeldaswordskills", striprefs=true),
 	@Optional.Interface(iface="zeldaswordskills.api.block.ISmashable", modid="zeldaswordskills", striprefs=true)
 })
-[/code]
-The individual @Optional.Interfaces are exactly the same as before, but separtated by commas and nested inside of an array, all enclosed by the @Optional.InterfaceList annotation.
 
-Alright, so let's make a block that is both liftable AND smashable by implementing ILiftable and ISmashable. Import those two classes and let Eclipse add the unimplemented methods for you, and be sure to set up the rest of the Block class (texture, creative tab, etc.). I will only cover the API methods here.
-[code]
+/*
+The individual @Optional.Interfaces are exactly the same as before, but separtated by commas and nested inside of an
+array, all enclosed by the @Optional.InterfaceList annotation.
+
+Alright, so let's make a block that is both liftable AND smashable by implementing ILiftable and ISmashable. Import
+those two classes and let Eclipse add the unimplemented methods for you, and be sure to set up the rest of the Block
+class (texture, creative tab, etc.). I will only cover the API methods here.
+*/
+
 @Method(modid="zeldaswordskills")
 @Override
 public BlockWeight getSmashWeight(EntityPlayer player, ItemStack stack, int meta) {
-// let's make our block very easy to smash, since we do not have any smashing items yet, the only
-// way to smash our block would be using one of the Zelda Hammers
-return BlockWeight.VERY_LIGHT;
+	// let's make our block very easy to smash, since we do not have any smashing items yet, the only
+	// way to smash our block would be using one of the Zelda Hammers
+	return BlockWeight.VERY_LIGHT;
 }
 
 @Method(modid="zeldaswordskills")
 @Override
 public Result onSmashed(World world, EntityPlayer player, ItemStack stack, int x, int y, int z, int side) {
-// for the sake of simplicity, we will just use the default smashing mechanics
-return Result.DEFAULT;
+	// for the sake of simplicity, we will just use the default smashing mechanics
+	return Result.DEFAULT;
 }
 
 @Method(modid="zeldaswordskills")
 @Override
 public BlockWeight getLiftWeight(EntityPlayer player, ItemStack stack, int meta) {
-// we want our block to be extremely difficult to lift, giving our custom itemLifter a purpose;
-// not even any of the items in Zelda can lift our block! mwa ha ha!
-return BlockWeight.EXTREME_II;
+	// we want our block to be extremely difficult to lift, giving our custom itemLifter a purpose;
+	// not even any of the items in Zelda can lift our block! mwa ha ha!
+	return BlockWeight.EXTREME_II;
 }
 
 @Method(modid="zeldaswordskills")
 @Override
 public void onLifted(World world, EntityPlayer player, ItemStack stack, int x, int y, int z, int meta) {
-// if you need to handle a tile entity or do anything else before the block is lifted,
-// you can do so here; however, we do not need to for our simple block
+	// if you need to handle a tile entity or do anything else before the block is lifted,
+	// you can do so here; however, we do not need to for our simple block
 }
 
 @Method(modid="zeldaswordskills")
 @Override
 public void onHeldBlockPlaced(World world, ItemStack stack, int x, int y, int z, int meta) {
-// if you want to do something special when the block is placed, you can do so here,
-// but we will leave it empty for this tutorial
+	// if you want to do something special when the block is placed, you can do so here,
+	// but we will leave it empty for this tutorial
 }
-[/code]
-That's it for the API methods. Once the rest of the block is set up and registered, you can go ahead and give it a try! You should have a block that can only be lifted with the special itemLifter that we made earlier, but can be smashed even with just the wooden hammer from Zelda. If you run your mod by itself, you will still have the item and block in the game, but without the lifting and smashing mechanics provided by the API. This is great if your items and blocks have other functions that still make them useful independently.
 
-You should now be able to work with pretty much any mod API in a manner that will still allow your mod to function independently should the API-providing mod not be present, as well as avoid including the API code in your mod directly. Good luck! Don't forget to give GotoLink kudos if you see him around - he likes to hang out over on MinecraftForge forums, so go bump up his karma from time to time!
+/*
+That's it for the API methods. Once the rest of the block is set up and registered, you can go ahead and give it a
+try! You should have a block that can only be lifted with the special itemLifter that we made earlier, but can be
+smashed even with just the wooden hammer from Zelda. If you run your mod by itself, you will still have the item and
+block in the game, but without the lifting and smashing mechanics provided by the API. This is great if your items
+and blocks have other functions that still make them useful independently.
+
+You should now be able to work with pretty much any mod API in a manner that will still allow your mod to function
+independently should the API-providing mod not be present, as well as avoid including the API code in your mod
+directly. Good luck! Don't forget to give GotoLink kudos if you see him around - he likes to hang out over on
+MinecraftForge forums, so go bump up his karma from time to time!
+*/
