@@ -1,4 +1,6 @@
 /*
+IMPORTANT: The following tutorial was created for Minecraft 1.6.4 - notes on updating to newer versions can be found at the bottom of the page, but you should follow the main tutorial first.
+
 Have you ever wished you had a few extra inventory slots, say for a shield or amulet? You've come to the right place.
 
 In this tutorial I will show you how to add custom slots to the player's inventory and effectively override the default 
@@ -33,12 +35,6 @@ http://www.minecraftforge.net/wiki/Packet_Handling
 As always, I try to provide as much information as I can so that if you haven't met all the prerequisites you should still be 
 able to follow along; however, if you are having trouble getting it to work, please make sure you understand and have 
 followed the tutorials above before asking for help.
-
-NOTE: Updating from Forge 804 to 871
-Three things you'll need to change in the GUI files:
-1. I18n.func_135053_a() is now I18n.getString()
-2. mc.func_110434_K() is now mc.renderEngine OR mc.getTextureManager()
-3. renderEngine.func_110577_a() is now renderEngine.bindTexture()
 
 NOTE: Throughout this tutorial, I am using ItemUseMana as the custom Item - this is an Item I made in my 
 IExtendedEntityProperties tutorial, so if you want to follow along exactly, go grab the code for it; otherwise, just 
@@ -825,6 +821,384 @@ Well that's it. Hopefully you have now overridden the default inventory screen w
 love to see what you've done with it, so post links to your mods if you have them :D
  */
 
+//==================== UPDATING ==================//
+/*
+Each of the following sections is a sequential update, starting from the code above made for Minecraft 1.6.4.
+*/
 
+//==================== UPDATING: Forge 804 --> 871 [both 1.6.4] ==================//
+/*
+Three things you'll need to change in the GUI files:
+1. I18n.func_135053_a() is now I18n.getString()
+2. mc.func_110434_K() is now mc.renderEngine OR mc.getTextureManager()
+3. renderEngine.func_110577_a() is now renderEngine.bindTexture()
+*/
 
+//==================== UPDATING: 1.6.4 --> 1.7.2 ==================//
+/*
+First, make sure you have thoroughly read and understood the tutorial for 1.6.4, as this section is for updating a functioning item or player inventory only, not for setting it up from scratch.
+*/
 
+/*
+ * Updating the Main Class
+ */
+/*
+Remove the @NetworkMod stuff. That's all gone.
+*/
+
+/*
+ * Updating the Item
+ */
+/*
+Everything is pretty much exactly the same, with a few minor differences:
+1. Remove the int parameter from the constructor; item IDs are history
+2. Change 'Icon' to 'IIcon' (two I's)
+3. Change 'IconRegister' to 'IIconRegister' (two I's)
+4. Update imports
+5. Be sure to change all your item references from itemID to the Item itself[/spoiler]
+*/
+
+/*
+ * Updating the Gui
+ */
+/*
+In the Gui, fontRenderer is now fontRendererObj, and you need to change to I18n.format if you were using that to translate the names at all. Use the updated IInventory method names for getInventoryName(), etc
+*/
+
+/*
+ * Updating the IInventory
+ */
+/*
+In all your Iinventory classes:
+1. Change isInvNameLocalized() to hasCustomInventoryName()
+2. Change getInvName() to getInventoryName()
+3. Change onInventoryChanged() to markDirty()
+4. Change open/closeChest() to open/closeInventory()
+5. Reading NBTTagLists has changed slightly:
+*/
+public void readFromNBT(NBTTagCompound compound) {
+	// now you must include the NBTBase type ID when getting the list; NBTTagCompound's ID is 10
+	NBTTagList items = compound.getTagList(tagName, compound.getId());
+	for (int i = 0; i < items.tagCount(); ++i) {
+		// tagAt(int) has changed to getCompoundTagAt(int)
+		NBTTagCompound item = items.getCompoundTagAt(i);
+		byte slot = item.getByte("Slot");
+		if (slot >= 0 && slot < getSizeInventory()) {
+			inventory[slot] = ItemStack.loadItemStackFromNBT(item);
+		}
+	}
+}
+
+/*
+ * Updating the Container and Slot
+ */
+/*
+Nothing to do here, unless you checked for a specific itemID somewhere.
+Change any reference to itemID to ItemStack.getItem() and the Item itself.
+*/
+
+/*
+ * Updating the KeyHandler and KeyBindings
+ */
+/*
+The KeyHandler class is history (as in you cannot extend it anymore), so we will combine our KeyBinding class directly into our KeyHandler class:
+*/
+public class KeyHandler
+{
+	/** Key index for easy handling */
+	public static final int CUSTOM_INV = 0;
+
+	/** Key descriptions; use a language file to localize the description later */
+	private static final String[] desc = {"key.tut_inventory.desc"};
+
+	/** Default key values – these can be changed using the in-game menu */
+	private static final int[] keyValues = {Keyboard.KEY_P};
+
+	private final KeyBinding[] keys;
+
+	public KeyHandler() {
+		// the advantage of doing it with the above static arrays is now we can just loop through
+		// creating and registering all of our keybindings automatically
+		keys = new KeyBinding[desc.length];
+		for (int i = 0; i < desc.length; ++i) {
+			// create the new KeyBinding:
+			keys[i] = new KeyBinding(desc[i], keyValues[i], "key.tutorial.category");
+			// and be sure to register it to the ClientRegistry:
+			ClientRegistry.registerKeyBinding(keys[i]);
+		}
+	}
+
+	// rather than the old KeyHandler class doing it for us
+	// now we must subscribe to the KeyInputEvent ourselves
+	@SubscribeEvent
+	public void onKeyInput(KeyInputEvent event) {
+		// first check that the player is not using the chat menu
+		// you can use this method from before:
+		// if (FMLClientHandler.instance().getClient().inGameHasFocus) {
+		// or you can use this new one that is available, doesn't really matter
+		if (!FMLClientHandler.instance().isGUIOpen(GuiChat.class)) {
+			// you can get the key code of the key pressed using the Keyboard class:
+			int kb = Keyboard.getEventKey();
+			// similarly, you can get the key state, but this will always be true when the event is fired:
+			boolean isDown = Keyboard.getEventKeyState();
+
+			// same as before, chain if-else if statements to find which of your custom keys
+			// was pressed and act accordingly:
+			if (kb == keys[CUSTOM_INV].getKeyCode()) {
+				EntityPlayer player = FMLClientHandler.instance().getClient().thePlayer;
+				// if (player.openContainer instanceof ContainerCustomPlayer) {
+				// before you could close the screen from here, but that no longer seems to be
+				// possible instead, you need to do so from within the GUI itself
+				// so we will just send a packet to open the GUI:
+				TutorialMain.packetPipeline.sendToServer(new OpenGuiPacket(TutorialMain.GUI_CUSTOM_INV));
+			}
+		}
+	}
+}
+
+/*
+In your ClientProxy, be sure to register your KeyHandler class:
+*/
+// KeyInputEvent is in the FML package, meaning it's posted to the FML event bus
+// rather than the regular Forge event bus:
+FMLCommonHandler.instance().bus().register(new KeyHandler());
+
+/*
+ * Updating the Network (NOT for 1.7.10!!! Skip this entire section if updating past 1.7.2)
+ */
+/*
+For 1.7.2, check out the wiki tutorial: http://www.minecraftforge.net/wiki/Netty_Packet_Handling
+
+Once you have copied and pasted that code (seriously, it's that simple) into your project, you will need to make a new package for your packets and register them with the PacketPipeline. I do it like so:
+*/
+// modify this method from the wiki in the PacketPipeline class:
+public void initialise() {
+	// NOTE: Be sure to change the channel from "TUT" to whatever you are using!!!
+	this.channels = NetworkRegistry.INSTANCE.newChannel("TUT", this);
+
+	// line added by me to register all my packets:
+	registerPackets();
+}
+
+// And add this method right below it
+// IMPORTANT: Always remember to add your newly created packet classes here or you WILL crash
+public void registerPackets() {
+	registerPacket(OpenGuiPacket.class);
+	registerPacket(SyncPlayerPropsPacket.class);
+}
+
+/*
+That's really all you have to do. Then you just make the packet classes themselves.
+*/
+
+// OpenGuiPacket
+public class OpenGuiPacket extends AbstractPacket
+{
+	// this will store the id of the gui to open
+	private int id;
+
+	// The basic, no-argument constructor MUST be included to use the new automated handling
+	public OpenGuiPacket() {}
+
+	// if there are any class fields, be sure to provide a constructor that allows
+	// for them to be initialized, and use that constructor when sending the packet
+	public OpenGuiPacket(int id) {
+		this.id = id;
+	}
+
+	@Override
+	public void encodeInto(ChannelHandlerContext ctx, ByteBuf buffer) {
+		// basic Input/Output operations, very much like DataOutputStream
+		buffer.writeInt(id);
+	}
+
+	@Override
+	public void decodeInto(ChannelHandlerContext ctx, ByteBuf buffer) {
+		// basic Input/Output operations, very much like DataInputStream
+		id = buffer.readInt();
+	}
+
+	@Override
+	public void handleClientSide(EntityPlayer player) {
+		// for opening a GUI, we don't need to do anything here
+	}
+
+	@Override
+	public void handleServerSide(EntityPlayer player) {
+		// because we sent the gui's id with the packet, we can handle all cases with one line:
+		player.openGui(TutorialMain.instance, id, player.worldObj, (int) player.posX, (int) player.posY, (int) player.posZ);
+	}
+}
+
+// SyncPlayerProps Packet
+public class SyncPlayerPropsPacket extends AbstractPacket
+{
+	// Previously, we've been writing each field in our properties one at a time,
+	// but that is really annoying, and we've already done it in the save and load
+	// NBT methods anyway, so here's a slick way to efficiently send all of your
+	// extended data, and no matter how much you add or remove, you'll never have
+	// to change the packet / synchronization of your data.
+
+	// this will store our ExtendedPlayer data, allowing us to easily read and write
+	private NBTTagCompound data;
+
+	// The basic, no-argument constructor MUST be included to use the new automated handling
+	public SyncPlayerPropsPacket() {}
+
+	// We need to initialize our data, so provide a suitable constructor:
+	public SyncPlayerPropsPacket(EntityPlayer player) {
+		// create a new tag compound
+		data = new NBTTagCompound();
+		// and save our player's data into it
+		ExtendedPlayer.get(player).saveNBTData(data);
+	}
+
+	@Override
+	public void encodeInto(ChannelHandlerContext ctx, ByteBuf buffer) {
+		// ByteBufUtils provides a convenient method for writing the compound
+		ByteBufUtils.writeTag(buffer, data);
+	}
+
+	@Override
+	public void decodeInto(ChannelHandlerContext ctx, ByteBuf buffer) {
+		// luckily, ByteBufUtils provides an easy way to read the NBT
+		data = ByteBufUtils.readTag(buffer);
+	}
+
+	@Override
+	public void handleClientSide(EntityPlayer player) {
+		// now we can just load the NBTTagCompound data directly; one and done, folks
+		ExtendedPlayer.get(player).loadNBTData(data);
+	}
+
+	@Override
+	public void handleServerSide(EntityPlayer player) {
+		// we never send this packet to the server, so do nothing here
+	}
+}
+
+/*
+Updating IextendedEntityProperties and the EventHandler
+Not much has changed here:
+*/
+private static final String getSaveKey(EntityPlayer player) {
+	// no longer a username field, so use the command sender name instead:
+	return player.getCommandSenderName() + ":" + EXT_PROP_NAME;
+}
+
+public static final void loadProxyData(EntityPlayer player) {
+	ExtendedPlayer playerData = ExtendedPlayer.get(player);
+	NBTTagCompound savedData = CommonProxy.getEntityData(getSaveKey(player));
+	if (savedData != null) { playerData.loadNBTData(savedData); }
+	// we are replacing the entire sync() method with a single line; more on packets later
+	// data can by synced just by sending the appropriate packet, as everything is handled internally by the packet class
+	TutorialMain.packetPipeline.sendTo(new SyncPlayerPropsPacket(player), (EntityPlayerMP) player);
+}
+
+// remove the public void sync() method; it is no longer needed
+/*
+For the EventHandler, pretty much all you have to do is replace @ForgeSubscribe with @SubscribeEvent and fix your imports. Everything else should work the same as before. Easy.
+*/
+
+//==================== UPDATING: 1.7.2 --> 1.7.10 ==================//
+You should only need to update the network code; see:
+http://www.minecraftforum.net/forums/mapping-and-modding/mapping-and-modding-tutorials/2137055
+
+//==================== UPDATING: 1.7.10 --> 1.8 ==================//
+/*
+ * Updating an IInventory class
+ */
+/*
+IInventory has the most notable changes, so we'll start there:
+
+1. 'Name' methods have 'Inventory' removed from them, and are inherited from IWorldNameable
+2. open/closeInventory now take an EntityPlayer parameter
+3. IInventory defines 4 new methods, only one of which we need to truly implement.
+
+Code to change in your IInventory classes:
+*/
+// Step 1: Update methods for IWorldNameable
+@Override
+// public String getInventoryName() {
+public String getName() {
+	return name;
+}
+
+@Override
+//public boolean hasCustomInventoryName() {
+public boolean hasCustomName() {
+	return name.length() > 0;
+}
+
+@Override
+public IChatComponent getDisplayName() {
+	return new ChatComponentText(name);
+}
+
+// Step 2: Add EntityPlayer parameter to open/close inventory (and yes, they still do nothing, usually)
+@Override
+//public void openInventory() {}
+public void openInventory(EntityPlayer player) {}
+
+@Override
+//public void closeInventory() {}
+public void closeInventory(EntityPlayer player) {}
+
+// Step 3: Add new methods defined by IInventory:
+@Override
+public int getField(int id) {
+	return 0;
+}
+
+@Override
+public void setField(int id, int value) {}
+
+@Override
+public int getFieldCount() {
+	return 0;
+}
+
+// This is the only one you need to implement, and it just needs to set every stack to null
+@Override
+public void clear() {
+	for (int i = 0; i < inventory.length; ++i) {
+		inventory[i] = null;
+	}
+}
+
+/*
+ * Updating a GUI class
+ */
+/*
+1. GuiInventory.func_147046_a finally has a name: 'GuiInventory.drawEntityOnScreen'
+2. keyTyped needs to thrown an IOException
+3. If you used your inventory's custom name, update the method calls
+
+Changes in code:
+*/
+// 1: GuiInventory.func_147046_a finally has a name: 'GuiInventory.drawEntityOnScreen'
+//GuiInventory.func_147046_a(guiLeft + 51, guiTop + 75, 30, guiLeft + 51 - xSize_lo, guiTop + 25 - ySize_lo, mc.thePlayer);
+GuiInventory.drawEntityOnScreen(guiLeft + 51, guiTop + 75, 30, guiLeft + 51 - xSize_lo, guiTop + 25 - ySize_lo, mc.thePlayer);
+
+// 2: keyTyped needs to thrown an IOException
+//protected void keyTyped(char c, int keyCode) {
+protected void keyTyped(char c, int keyCode) throws IOException {
+
+// 3: If you used your inventory's custom name, update the method calls
+//String s = inventory.hasCustomInventoryName() ? inventory.getInventoryName() : I18n.format(inventory.getInventoryName());
+String s = inventory.hasCustomName() ? inventory.getName() : I18n.format(inventory.getName());
+
+/*
+ * Updating IMPORTS
+ */
+/*
+Last but most importantly, be sure to update your 'cpw.mods.fml...' imports EVERYWHERE - change them to 'net.minecraftforge.fml...'; for example, here are the imports from our IGuiHandler:
+*/
+//import cpw.mods.fml.common.network.IGuiHandler;
+//import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.common.network.IGuiHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+
+/*
+That's all you should need to get your inventories up and running! Good luck with 1.8!
+*/
