@@ -20,26 +20,7 @@ Prerequisites:
 1. Know how to set up and use Forge Events. See my tutorial on creating an EventHandler.
 2. Willingness to read carefully.
 
-NOTES: Updating from Minecraft 1.6.4 to Minecraft 1.7.2
-These can be found at the end of the tutorial.
-
-NOTES: Updating from Forge 804 to 871
-Three things you'll need to change in your GUI files:
-1. I18n.func_135053_a() is now I18n.getString()
-2. mc.func_110434_K() is now mc.renderEngine OR mc.getTextureManager()
-3. renderEngine.func_110577_a() is now renderEngine.bindTexture()
-
-IMPORTANT NOTE: Using IExtendedEntityProperties adds new data to entities, and the server handles initializing,
-maintaining, loading and saving of all data. For multi-player compatibility outside of the Eclipse server environment,
-you must require your mod to be installed server-side for the data to exist. This means your @NetworkMod line will
-look like this:
-*/
-@NetworkMod(clientSideRequired=true, serverSideRequired=[b]true[/b], // packetHandler stuff)
-/*
-If you need to display any of this information, such as in a Gui, you need to send a packet to the client with the data
-to display. This is the only kind of information the client needs to know.
-
-Thanks to Pawaox for bringing this to my attention, and Seigneur_Necron for confirming the requirements.
+NOTES on updating from previous versions can be found at the end of the tutorial.
 */
 /**
  * Step 1: Create a class that implements IExtendedEntityProperties
@@ -189,7 +170,8 @@ Registering of IExtendedEntityProperties is all done in the EntityConstructing e
 */
 public class TutEventHandler
 {
-	@ForgeSubscribe
+	// 1.6.4: @ForgeSubscribe
+	@SubscribeEvent
 	public void onEntityConstructing(EntityConstructing event)
 	{
 		/*
@@ -290,7 +272,8 @@ our ExtendedPlayer class. It just returns 'this.currentMana'
 
 Next, we add a LivingFallEvent to our EventHandler:
 */
-@ForgeSubscribe
+// 1.6.4: @ForgeSubscribe
+@SubscribeEvent
 public void onLivingFallEvent(LivingFallEvent event)
 {
 	// Remember that so far we have only added ExtendedPlayer properties
@@ -371,7 +354,8 @@ public class GuiManaBar extends Gui
 	// This event is called by GuiIngameForge during each frame by
 	// GuiIngameForge.pre() and GuiIngameForce.post().
 	//
-	@ForgeSubscribe(priority = EventPriority.NORMAL)
+	// 1.6.4: @ForgeSubscribe(priority = EventPriority.NORMAL)
+	@SubscribeEvent(priority = EventPriority.NORMAL)
 	public void onRenderExperienceBar(RenderGameOverlayEvent event)
 	{
 		// We draw after the ExperienceBar has drawn.  The event raised by GuiIngameForge.pre()
@@ -491,10 +475,14 @@ to synchronize the server/client.
 
 Please take a few minutes to read up on Packet Handling, as I'm not going to cover it in
 much detail here:
-http://www.minecraftforge.net/wiki/Tutorials/Packet_Handling
+1.6.4: http://www.minecraftforge.net/wiki/Tutorials/Packet_Handling
+1.7.2: SimpleNetworkWrapper is broken, use PacketPipeline
+1.7.10: SNW works now, see here: http://www.minecraftforum.net/forums/mapping-and-modding/mapping-and-modding-tutorials/2137055
 
 Ok, moving on.
 Make a packet handler class like in the above tutorial:
+
+STOP!!! The packet code below is for 1.6.4 - if you are coding for 1.7.2 or above, please see the actual demo of this tutorial for a current network implementation. You can find it here: https://github.com/coolAlias/Tutorial-Demo/tree/master/src/main/java/tutorial/network
 */
 public class TutorialPacketHandler implements IPacketHandler
 {
@@ -604,7 +592,8 @@ Add this to your EventHandler's onEntityJoinWorldEvent method, as this event occ
 after everything (the world, entities, etc) is loaded but before anything really happens
 in the game. As a bonus, it's only called once per entity, so you're not spamming packets.
 */
-@ForgeSubscribe
+// 1.6.4: @ForgeSubscribe
+@SubscribeEvent
 public void onEntityJoinWorld(EntityJoinWorldEvent event)
 {
 	//Only need to synchronize when the world is NOT remote (i.e. we're on the server side)
@@ -777,7 +766,8 @@ public class ExtendedLiving implements IExtendedEntityProperties
 }
 // Be sure to register it in your EventHandler!
 // onEntityConstructing should now look like this:
-@ForgeSubscribe
+// 1.6.4: @ForgeSubscribe
+@SubscribeEvent
 public void onEntityConstructing(EntityConstructing event)
 {
 	// From last time:
@@ -814,7 +804,8 @@ Good news is, I know how to get around it. Move everything that seems like it sh
 go in init() to your EventHandler onEntityJoinWorldEvent. Be sure to leave the init
 method totally empty.
 */
-@ForgeSubscribe
+// 1.6.4: @ForgeSubscribe
+@SubscribeEvent
 public void onEntityJoinWorld(EntityJoinWorldEvent event)
 {
 	if (event.entity instanceof EntityLivingBase)
@@ -1069,4 +1060,23 @@ Everything is pretty much exactly the same, with a few minor differences:
 4. Update imports
 
 That should be it for updating to 1.7.2 if you've completed the rest of the tutorial.
+*/
+/*
+1.6.4: Updating from Forge 804 to 871
+Three things you'll need to change in your GUI files:
+1. I18n.func_135053_a() is now I18n.getString()
+2. mc.func_110434_K() is now mc.renderEngine OR mc.getTextureManager()
+3. renderEngine.func_110577_a() is now renderEngine.bindTexture()
+
+IMPORTANT NOTE (1.6.4 only): Using IExtendedEntityProperties adds new data to entities, and the server handles initializing,
+maintaining, loading and saving of all data. For multi-player compatibility outside of the Eclipse server environment,
+you must require your mod to be installed server-side for the data to exist. This means your @NetworkMod line will
+look like this:
+*/
+@NetworkMod(clientSideRequired=true, serverSideRequired=[b]true[/b], // packetHandler stuff)
+/*
+If you need to display any of this information, such as in a Gui, you need to send a packet to the client with the data
+to display. This is the only kind of information the client needs to know.
+
+Thanks to Pawaox for bringing this to my attention, and Seigneur_Necron for confirming the requirements.
 */
