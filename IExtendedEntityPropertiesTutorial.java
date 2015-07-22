@@ -533,6 +533,8 @@ in all of my IExtendedEntityProperties classes, just to make it easy on myself.
  */
 public final void sync()
 {
+	// in 1.7.2 and above, you would replace all of this clunky code with a single line:
+	// PacketDispatcher.sendTo(new SyncPlayerInfoPacket(this), (EntityPlayerMP) player);
 	ByteArrayOutputStream bos = new ByteArrayOutputStream(8);
 	DataOutputStream outputStream = new DataOutputStream(bos);
 	
@@ -567,7 +569,7 @@ Here you can see my implementations for setCurrentMana and setMaxMana:
 public void setCurrentMana(int amount)
 {
 	this.currentMana = (amount < this.maxMana ? amount : this.maxMana);
-	this.sync();
+	this.sync(); // BAD Monkey! This syncs ALL properties, but really you just want to sync current mana - make your own packet
 }
 
 /**
@@ -576,12 +578,18 @@ public void setCurrentMana(int amount)
 public void setMaxMana(int amount)
 {
 	this.maxMana = (amount > 0 ? amount : 0);
-	this.sync();
+	this.sync(); // BAD Monkey! This syncs ALL properties, but really you just want to sync max mana - make your own packet
 }
 /*
 Note that we add a call to sync() our ExtendedProperties in each of these methods because they
 changed our stored variables. We also need to sync the properties in any other methods that
 do so, like consumeMana and replenishMana.
+
+However, it is VERY BAD and LAZY to send the same ginormous packet with all of your extra
+data every time a single value changes - if you have fields, such as mana, that change frequently,
+you should really implement a separate packet whose sole purpose is to sync that one field, and
+send that much lighter-weight packet whenever the value changes. I didn't do that here because
+it's just a tutorial and I wanted to try and keep it simple.
 
 Another time we need to sync properties is after the entity is loaded from NBT, as that is
 only done server side and we want the information for our GuiManaBar. Because we can't
@@ -693,7 +701,8 @@ Now remove 'currentMana' from your sync() method and packet handler, but keep in
 followed along exactly.
 
 Why not use DataWatcher for maxMana too? Well you could, but since it rarely changes, it would be a waste of such a
-limited resource.
+limited resource. In fact, I don't really recommend ever using DataWatcher for players, as so many mods do that you
+will inevitably run into a conflict some day. It's great, however, for custom entities.
 
 That's pretty much it. Now current mana will stay in sync for the gui display automatically and you'll send far fewer
 packets. If you ever run into a conflict with another watchable object using the same index '20', you only need to
@@ -786,11 +795,6 @@ public void onEntityConstructing(EntityConstructing event)
 		stores a different name for each class. Nice.
 		*/
 		ExtendedLiving.register((EntityLivingBase) event.entity);
-		
-		/* Old, cumbersome method:
-		event.entity.registerExtendedProperties(ExtendedLivingBase.EXT_PROP_NAME,
-				new ExtendedLivingBase((EntityLivingBase) event.entity));
-		*/
 		// Remember, this will also call the init() method automatically
 }
 /*
@@ -913,6 +917,9 @@ Thanks again to Seigneur_Necron for these great tips!
 And that's how it's done, folks. Happy modding. :D
 */
 /*
+NOTES: Updating from 1.7.10 to 1.8
+Nothing changed as far as IEEP is concerned, but you will need to update your IMessageHandlers to handle multi-threading. See the SimpleNetworkWrapper tutorials for more information.
+
 NOTES: Updating from 1.7.2 to 1.7.10
 Use SimpleNetworkWrapper instead of the PacketPipeline; see http://www.minecraftforum.net/forums/mapping-and-modding/mapping-and-modding-tutorials/2137055
 
