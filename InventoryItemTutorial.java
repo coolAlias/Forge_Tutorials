@@ -1,29 +1,25 @@
 /**
  * Creating an Item that stores an Inventory (such as a Backpack)
- * (and also "How to Properly Override Shift-Clicking" - see Step 3)
  */
 /*
 I'm back with a new tutorial on how to create an Item that can store an Inventory,
 such as a backpack. This time I've commented pretty thoroughly within the code itself,
 so I'll let it do most of the talking.
 
-I've included everything you'll need to get it working, so there are no prerequisites
-to this tutorial, though it's best if you at least know how to set up a mod.
+While the exact code used will change from version to version (of both Minecraft and
+Forge), the concepts described remain the same.
 
-If you know how to make a custom Item or have experience with TileEntity Gui's, then
-you probably won't have any trouble with this.
+Note that this is not a tutorial on how to set up your first mod or create your first Item. If
+you have never done either of those before, you should start with a more basic tutorial first.
+
+If, on the other hand, you already have experience working with GUIs and Containers, you
+probably won't have any trouble following along.
 
 I do highly suggest reading the tutorial on Item NBT, however, as it will greatly aid
 in understanding what's to come. Find it here: http://www.minecraftforge.net/wiki/Item_nbt
 
 NOTE: If you want to open your inventory with the keyboard, check out this tutorial on key binding:
 http://www.minecraftforum.net/topic/1798625-162sobiohazardouss-forge-keybinding-tutorial/
-
-NOTES on Updating from Forge 804 to 871:
-Three things you'll need to change in your GUI files:
-1. I18n.func_135053_a() in now I18n.getString()
-2. mc.func_110434_K() is now mc.renderEngine OR mc.getTextureManager()
-3. renderEngine.func_110577_a() is now renderEngine.bindTexture()
 
 Now on to the tutorial!
 */
@@ -37,12 +33,11 @@ Now on to the tutorial!
 package coolalias.inventoryitem;
 
 @Mod(modid = "inventoryitemmod", name = "Inventory Item Tutorial", version = "1.0.0")
-@NetworkMod(clientSideRequired=true, serverSideRequired=false)
-
+// 1.6.4. only: @NetworkMod(clientSideRequired=true, serverSideRequired=false)
 public final class InventoryItemMain
 {
 	@Instance("inventoryitemmod")
-	public static InventoryItemMain instance = new InventoryItemMain();
+	public static InventoryItemMain instance;
 
 	@SidedProxy(clientSide = "coolalias.inventoryitem.ClientProxy", serverSide = "coolalias.inventoryitem.CommonProxy")
 	public static CommonProxy proxy;
@@ -50,18 +45,17 @@ public final class InventoryItemMain
 	/** This is used to keep track of GUIs that we make*/
 	private static int modGuiIndex = 0;
 
-	/** This is the starting index for all of our mod's item IDs */
-	private static int modItemIndex = 7000;
-
 	/** Set our custom inventory Gui index to the next available Gui index */
 	public static final int GUI_ITEM_INV = modGuiIndex++;
 
 	// ITEMS ETC.
-	public static final Item itemstore = new ItemStore(modItemIndex++).setUnlocalizedName("item_store").setCreativeTab(CreativeTabs.tabMisc);
+	public static Item itemstore;
 
 	@EventHandler
 	public void preInit(FMLPreInitializationEvent event)
 	{
+		itemstore = new ItemStore().setUnlocalizedName("item_store").setCreativeTab(CreativeTabs.tabMisc);
+		GameRegistry.registerItem(itemstore, "item_store");
 	}
 
 	@EventHandler
@@ -215,14 +209,14 @@ public class InventoryItem implements IInventory
 		onInventoryChanged();
 	}
 
-	// 1.7.2 renamed to getInventoryName
+	// 1.7.2+ renamed to getInventoryName
 	@Override
 	public String getInvName()
 	{
 		return name;
 	}
 
-	// 1.7.2 renamed to hasCustomInventoryName
+	// 1.7.2+ renamed to hasCustomInventoryName
 	@Override
 	public boolean isInvNameLocalized()
 	{
@@ -240,7 +234,7 @@ public class InventoryItem implements IInventory
 	 * anytime the inventory changes. Perfect. Much better than using onUpdate in an Item, as this will also
 	 * let you change things in your inventory without ever opening a Gui, if you want.
 	 */
-	 // 1.7.2 renamed to markDirty
+	 // 1.7.2+ renamed to markDirty
 	@Override
 	public void onInventoryChanged()
 	{
@@ -261,11 +255,11 @@ public class InventoryItem implements IInventory
 		return true;
 	}
 
-	// 1.7.2 renamed to openInventory
+	// 1.7.2+ renamed to openInventory(EntityPlayer player)
 	@Override
 	public void openChest() {}
 
-	// 1.7.2 renamed to closeInventory
+	// 1.7.2+ renamed to closeInventory(EntityPlayer player)
 	@Override
 	public void closeChest() {}
 
@@ -289,12 +283,12 @@ public class InventoryItem implements IInventory
 	public void readFromNBT(NBTTagCompound compound)
 	{
 		// Gets the custom taglist we wrote to this compound, if any
-		// 1.7.2 change to compound.getTagList("ItemInventory", Constants.NBT.TAG_COMPOUND);
+		// 1.7.2+ change to compound.getTagList("ItemInventory", Constants.NBT.TAG_COMPOUND);
 		NBTTagList items = compound.getTagList("ItemInventory");
 
 		for (int i = 0; i < items.tagCount(); ++i)
 		{
-			// 1.7.2 change to items.getCompoundTagAt(i)
+			// 1.7.2+ change to items.getCompoundTagAt(i)
 			NBTTagCompound item = (NBTTagCompound) items.tagAt(i);
 			int slot = item.getInteger("Slot");
 
@@ -464,10 +458,10 @@ public class ContainerItem extends Container
 	/**
 	 * Called when a player shift-clicks on a slot. You must override this or you will crash when someone does that.
 	 */
-	public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int par2)
+	public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int index)
 	{
 		ItemStack itemstack = null;
-		Slot slot = (Slot) this.inventorySlots.get(par2);
+		Slot slot = (Slot) this.inventorySlots.get(index);
 
 		if (slot != null && slot.getHasStack())
 		{
@@ -475,7 +469,7 @@ public class ContainerItem extends Container
 			itemstack = itemstack1.copy();
 
 			// If item is in our custom Inventory or armor slot
-			if (par2 < INV_START)
+			if (index < INV_START)
 			{
 				// try to place in player inventory / action bar
 				if (!this.mergeItemStack(itemstack1, INV_START, HOTBAR_END+1, true))
@@ -522,20 +516,20 @@ public class ContainerItem extends Container
 				/**
 				 * Implementation number 1: Shift-click into your custom inventory
 				 */
-				if (par2 >= INV_START)
-        		    	{
-            				// place in custom inventory
-        				if (!this.mergeItemStack(itemstack1, 0, INV_START, false))
+				if (index >= INV_START)
+				{
+					// place in custom inventory
+					if (!this.mergeItemStack(itemstack1, 0, INV_START, false))
 					{
 						return null;
-                			}
-            			}
+					}
+				}
 				
 				/**
 				 * Implementation number 2: Shift-click items between action bar and inventory
 				 */
 				// item is in player's inventory, but not in action bar
-				if (par2 >= INV_START && par2 < HOTBAR_START)
+				if (index >= INV_START && index < HOTBAR_START)
 				{
 					// place in action bar
 					if (!this.mergeItemStack(itemstack1, HOTBAR_START, HOTBAR_END+1, false))
@@ -544,7 +538,7 @@ public class ContainerItem extends Container
 					}
 				}
 				// item in action bar - place in player inventory
-				else if (par2 >= HOTBAR_START && par2 < HOTBAR_END+1)
+				else if (index >= HOTBAR_START && index < HOTBAR_END+1)
 				{
 					if (!this.mergeItemStack(itemstack1, INV_START, INV_END+1, false))
 					{
@@ -599,102 +593,75 @@ you will need to override mergeStackInSlot to avoid losing all the items but one
  * Note you only need it if your slot / inventory's max stack size is 1
  */
 @Override
-protected boolean mergeItemStack(ItemStack par1ItemStack, int par2, int par3, boolean par4)
+protected boolean mergeItemStack(ItemStack stack, int start, int end, boolean backwards)
 {
 	boolean flag1 = false;
-	int k = par2;
-
-	if (par4)
-	{
-		k = par3 - 1;
-	}
-
+	int k = (backwards ? end - 1 : start);
 	Slot slot;
 	ItemStack itemstack1;
 
-	if (par1ItemStack.isStackable())
+	if (stack.isStackable())
 	{
-		while (par1ItemStack.stackSize > 0 && (!par4 && k < par3 || par4 && k >= par2))
+		while (stack.stackSize > 0 && (!backwards && k < end || backwards && k >= start))
 		{
-			slot = (Slot) this.inventorySlots.get(k);
+			slot = (Slot) inventorySlots.get(k);
 			itemstack1 = slot.getStack();
 
-			if (itemstack1 != null && itemstack1.itemID == par1ItemStack.itemID && (!par1ItemStack.getHasSubtypes() || par1ItemStack.getItemDamage() == itemstack1.getItemDamage()) && ItemStack.areItemStackTagsEqual(par1ItemStack, itemstack1))
-			{
-				int l = itemstack1.stackSize + par1ItemStack.stackSize;
+			if (!slot.isItemValid(stack)) {
+				k += (backwards ? -1 : 1);
+				continue;
+			}
 
-				if (l <= par1ItemStack.getMaxStackSize() && l <= slot.getSlotStackLimit())
-				{
-					par1ItemStack.stackSize = 0;
+			if (itemstack1 != null && itemstack1.getItem() == stack.getItem() &&
+					(!stack.getHasSubtypes() || stack.getItemDamage() == itemstack1.getItemDamage()) && ItemStack.areItemStackTagsEqual(stack, itemstack1))
+			{
+				int l = itemstack1.stackSize + stack.stackSize;
+
+				if (l <= stack.getMaxStackSize() && l <= slot.getSlotStackLimit()) {
+					stack.stackSize = 0;
 					itemstack1.stackSize = l;
 					inventory.onInventoryChanged();
 					flag1 = true;
-				}
-				else if (itemstack1.stackSize < par1ItemStack.getMaxStackSize() && l < slot.getSlotStackLimit())
-				{
-					par1ItemStack.stackSize -= par1ItemStack.getMaxStackSize() - itemstack1.stackSize;
-					itemstack1.stackSize = par1ItemStack.getMaxStackSize();
+				} else if (itemstack1.stackSize < stack.getMaxStackSize() && l < slot.getSlotStackLimit()) {
+					stack.stackSize -= stack.getMaxStackSize() - itemstack1.stackSize;
+					itemstack1.stackSize = stack.getMaxStackSize();
 					inventory.onInventoryChanged();
 					flag1 = true;
 				}
 			}
 
-			if (par4)
-			{
-				--k;
-			}
-			else
-			{
-				++k;
-			}
+			k += (backwards ? -1 : 1);
 		}
 	}
-
-	if (par1ItemStack.stackSize > 0)
+	if (stack.stackSize > 0)
 	{
-		if (par4)
-		{
-			k = par3 - 1;
-		}
-		else
-		{
-			k = par2;
-		}
-
-		while (!par4 && k < par3 || par4 && k >= par2)
-		{
-			slot = (Slot)this.inventorySlots.get(k);
+		k = (backwards ? end - 1 : start);
+		while (!backwards && k < end || backwards && k >= start) {
+			slot = (Slot) inventorySlots.get(k);
 			itemstack1 = slot.getStack();
 
-			if (itemstack1 == null)
-			{
-				int l = par1ItemStack.stackSize;
+			if (!slot.isItemValid(stack)) {
+				k += (backwards ? -1 : 1);
+				continue;
+			}
 
-				if (l <= slot.getSlotStackLimit())
-				{
-					slot.putStack(par1ItemStack.copy());
-					par1ItemStack.stackSize = 0;
+			if (itemstack1 == null) {
+				int l = stack.stackSize;
+				if (l <= slot.getSlotStackLimit()) {
+					slot.putStack(stack.copy());
+					stack.stackSize = 0;
 					inventory.onInventoryChanged();
 					flag1 = true;
 					break;
-				}
-				else
-				{
-					this.putStackInSlot(k, new ItemStack(par1ItemStack.getItem(), slot.getSlotStackLimit()));
-					par1ItemStack.stackSize -= slot.getSlotStackLimit();
+				} else {
+					putStackInSlot(k, new ItemStack(stack.getItem(), slot.getSlotStackLimit(), stack.getItemDamage()));
+					stack.stackSize -= slot.getSlotStackLimit();
 					inventory.onInventoryChanged();
 					flag1 = true;
 				}
 			}
 
-			if (par4)
-			{
-				--k;
-			}
-			else
-			{
-				++k;
-			}
+			k += (backwards ? -1 : 1);
 		}
 	}
 
@@ -791,7 +758,8 @@ public class GuiItemInventory extends GuiContainer
 	}
 
 	/**
-	 * This renders the player model in standard inventory position
+	 * This renders the player model in standard inventory position (in later versions of Minecraft / Forge, you can
+	 * simply call GuiInventory.drawEntityOnScreen directly instead of copying this code)
 	 */
 	public static void drawPlayerModel(int x, int y, int scale, float yaw, float pitch, EntityLivingBase entity) {
 		GL11.glEnable(GL11.GL_COLOR_MATERIAL);
@@ -862,7 +830,7 @@ public class ItemStore extends Item
 		{
 			// If player not sneaking, open the inventory gui
 			if (!player.isSneaking()) {
-				player.openGui(InventoryItemMain.instance, InventoryItemMain.GUI_ITEM_INV, world, (int) player.posX, (int) player.posY, (int) player.posZ);
+				player.openGui(InventoryItemMain.instance, InventoryItemMain.GUI_ITEM_INV, world, 0, 0, 0);
 			}
 			
 			// Otherwise, stealthily place some diamonds in there for a nice surprise next time you open it up :)
