@@ -612,13 +612,10 @@ activation, the only real alternative is to use a KeyBinding and KeyHandler clas
 please refer back to the prerequisites and follow the tutorial there.
 
 Don't forget to register your KeyHandler in your main mod, but only on the client side!
-*/
-// RegisterKeyBinding class
-public class RegisterKeyBindings
-{
-	
-}
 
+NOTE: The TutKeyHandler class is 1.6.4 code - for 1.7 and above, KeyHandler no longer exists; instead, you must
+subscribe to the KeyInputEvent. See the Tutorial Demo for an example.
+*/
 // TutKeyHandler class
 @SideOnly(Side.CLIENT)
 public class TutKeyHandler extends KeyHandler
@@ -653,7 +650,7 @@ public class TutKeyHandler extends KeyHandler
 			repeat[i] = false;
 		}
 
-		KeyBindingRegistry.registerKeyBinding(new TutKeyHandler(key, repeat));
+		KeyBindingRegistry.registerKeyBinding(new TutKeyHandler(keys, repeat));
 	}
 
 	private TutKeyHandler(KeyBinding[] keyBindings, boolean[] repeatings) {
@@ -911,7 +908,7 @@ public class KeyHandler
 	/** Key descriptions; use a language file to localize the description later */
 	private static final String[] desc = {"key.tut_inventory.desc"};
 
-	/** Default key values – these can be changed using the in-game menu */
+	/** Default key values Â– these can be changed using the in-game menu */
 	private static final int[] keyValues = {Keyboard.KEY_P};
 
 	private final KeyBinding[] keys;
