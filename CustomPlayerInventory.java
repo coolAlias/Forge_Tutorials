@@ -1098,8 +1098,8 @@ For the EventHandler, pretty much all you have to do is replace @ForgeSubscribe 
 */
 
 //==================== UPDATING: 1.7.2 --> 1.7.10 ==================//
-You should only need to update the network code; see:
-http://www.minecraftforum.net/forums/mapping-and-modding/mapping-and-modding-tutorials/2137055
+//You should only need to update the network code; see:
+//http://www.minecraftforum.net/forums/mapping-and-modding/mapping-and-modding-tutorials/2137055
 
 //==================== UPDATING: 1.7.10 --> 1.8 ==================//
 /*
